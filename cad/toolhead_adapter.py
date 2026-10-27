@@ -14,7 +14,7 @@ Printed parts: the adapter, and a duct (x2) that screws to the shelf under each 
 from pathlib import Path
 import math
 from build123d import (
-    Box, Compound, Cylinder, Location, Plane, Pos, Rectangle, Rot, Vector,
+    Axis, Box, Compound, Cylinder, Location, Plane, Pos, Rectangle, Rot, Vector,
     export_step, export_stl, import_step, loft,
 )
 
@@ -88,6 +88,13 @@ DUCT_SCREW_Y = 18.0          # 2x M2.5x8 self-tapping per duct, just outside the
 DUCT_SCREW_CLEAR = 2.8
 LUG_H = 4.0                  # screw lugs above the shelf, beside the blower, for thread length
 
+# Fillets. None inside the box (the mount slides in with FIT), in the blower's seat, or on the top face
+# (bed face when printing, and the BMG sits on it).
+R_CORNER = 3.0               # outer vertical corners: top plate, shelf/duct flange outer corners
+R_SMALL = 1.0                # shelf inner corners, lugs, duct flange-to-tube junction
+R_ARM_ROOT = 3.0             # concave, top plate underside to arm outer face (blower top sits 5 mm lower)
+R_WINDOW = 2.0               # arm window corners
+
 # ------------------------------------------------------------- derived values
 MOUNT_TOP = -PLATE_T
 NOZZLE_BELOW_MOUNT_TOP = HM_SEAT_DROP + HE_TIP
@@ -113,6 +120,25 @@ DUCT_SCREW_X = sum(OUT_X) / 2
 
 def box(x0, x1, y0, y1, z0, z1):
     return Pos((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) * Box(x1 - x0, y1 - y0, z1 - z0)
+
+
+def fillet_where(shape, r, axis, where):
+    """Fillet the edges parallel to axis (any edge if None) whose centre satisfies where(centre)."""
+    edges = shape.edges() if axis is None else shape.edges().filter_by(axis)
+    edges = [e for e in edges if where(e.center())]
+    assert edges, "fillet_where: no edges matched"
+    return shape.fillet(r, edges)
+
+
+def near(a, b, tol=0.01):
+    return abs(a - b) < tol
+
+
+def shelf_box(z0, z1):
+    """Shelf / duct flange outline under the +X blower, corners rounded."""
+    b = box(*SHELF_X, -SHELF_HALF_Y, SHELF_HALF_Y, z0, z1)
+    b = fillet_where(b, R_CORNER, Axis.Z, lambda c: near(c.X, SHELF_X[1]))
+    return fillet_where(b, R_SMALL, Axis.Z, lambda c: near(c.X, SHELF_X[0]))
 
 
 def cyl_y(d, x, z, y0, y1):
@@ -151,10 +177,11 @@ def blower_side():
     holes = [blower_world(x, 0, z) for x, z in BL_HOLES]
     arm = box(ARM_X0, BL_X0, -15.5, 15.5, SHELF_LO, 0)
     window = box(ARM_X0 - 1, BL_X0 + 1, -7.5, 7.5, BLOWER_Z - 9, BLOWER_Z + 9)
-    arm = arm - window
-    shelf = box(*SHELF_X, -SHELF_HALF_Y, SHELF_HALF_Y, SHELF_LO, OUT_LO)
+    arm = arm - window.fillet(R_WINDOW, window.edges().filter_by(Axis.X))
+    shelf = shelf_box(SHELF_LO, OUT_LO)
     lugs = [box(*OUT_X, 15.3, SHELF_HALF_Y, OUT_LO, OUT_LO + LUG_H),
             box(*OUT_X, -SHELF_HALF_Y, -15.3, OUT_LO, OUT_LO + LUG_H)]
+    lugs = [lug.fillet(R_SMALL, lug.edges().filter_by(Axis.Z)) for lug in lugs]
     solid = arm + shelf + lugs[0] + lugs[1]
     cuts = [box(*OUT_X, *OUT_Y, SHELF_LO - 1, OUT_LO + 0.01)]                  # air passage
     cuts += [cyl_x(BL_PILOT, p.Y, p.Z, ARM_X0 - 1, BL_X0 + 1) for p in holes]
@@ -185,8 +212,13 @@ def build_duct():
     w2 = 2 * DUCT_WALL
     outer = loft([in_pl * Rectangle(in_w + w2, in_h + w2), ex_pl * Rectangle(ex_w + w2, ex_h + w2)])
     inner = loft([in_pl.offset(-0.5) * Rectangle(in_w, in_h), ex_pl.offset(0.5) * Rectangle(ex_w, ex_h)])
-    flange = box(*SHELF_X, -SHELF_HALF_Y, SHELF_HALF_Y, FLANGE_LO, SHELF_LO)
-    duct = flange + outer - inner - box(*OUT_X, *OUT_Y, FLANGE_LO - 0.01, SHELF_LO + 1)
+    flange = shelf_box(FLANGE_LO, SHELF_LO)
+    duct = flange + outer
+    # tube outline on the flange; its outer side runs 0.3 mm from the flange edge, too close to fillet
+    in_x = (in_c.X - (in_h + w2) / 2 - 0.01, min(in_c.X + (in_h + w2) / 2 + 0.01, SHELF_X[1] - R_SMALL))
+    duct = fillet_where(duct, R_SMALL, None, lambda c: near(c.Z, FLANGE_LO) and in_x[0] < c.X < in_x[1]
+                        and abs(c.Y - in_c.Y) < (in_w + w2) / 2 + 0.01)
+    duct = duct - inner - box(*OUT_X, *OUT_Y, FLANGE_LO - 0.01, SHELF_LO + 1)
     for sy in (-1, 1):
         duct = duct - cyl_z(DUCT_SCREW_CLEAR, DUCT_SCREW_X, sy * DUCT_SCREW_Y, FLANGE_LO - 1, SHELF_LO + 1)
     return duct.solids()[0] if len(duct.solids()) == 1 else duct
@@ -194,12 +226,19 @@ def build_duct():
 
 def build_part():
     top = box(-PLATE_HALF_X, PLATE_HALF_X, Y_FRONT_OUT, Y_BACK_OUT, -PLATE_T, 0)
+    top = top.fillet(R_CORNER, top.edges().filter_by(Axis.Z))
     # front plate and back tab run out to the blower arms' outer faces, closing the frame into a box
     front = box(-BL_X0, BL_X0, Y_FRONT_OUT, Y_FRONT_IN, FAN_Z - 15.0 - FAN_PLATE_MARGIN, 0)
     back = box(-BL_X0, BL_X0, Y_BACK_IN, Y_BACK_OUT, MOUNT_TOP - BACK_TAB_H, 0)
     side_r, cuts_r = blower_side()
     side_l, cuts_l = Rot(0, 0, 180) * side_r, Rot(0, 0, 180) * cuts_r
-    part = top + front + back + side_r + side_l
+    # concave fillet under the top plate's overhang at each arm, as a solid trimmed to the plate's outline
+    # (an edge fillet fails there: the plate's front/back faces sit a fraction of a mm off the arm's)
+    r = R_ARM_ROOT
+    root = (box(BL_X0, BL_X0 + r, -SHELF_HALF_Y, SHELF_HALF_Y, -PLATE_T - r, -PLATE_T)
+            - cyl_y(2 * r, BL_X0 + r, -PLATE_T - r, -SHELF_HALF_Y - 1, SHELF_HALF_Y + 1))
+    roots = [(rr & Pos(0, 0, -PLATE_T) * top) for rr in (root, Rot(0, 0, 180) * root)]
+    part = top + front + back + side_r + side_l + roots[0] + roots[1]
 
     cuts = [
         box(-50, 50, MOTOR_RELIEF[0], 50, -MOTOR_RELIEF[1], 1),                 # under the motor
