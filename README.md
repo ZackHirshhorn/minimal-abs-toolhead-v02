@@ -4,6 +4,8 @@ A printed adapter that hangs a TZ-V6 2.0 hotend under a **Wristwatch BMG** extru
 
 ![assembly](output/render_assembly.png)
 
+The bill of materials and step-by-step build are in [ASSEMBLY.md](ASSEMBLY.md).
+
 ## What's in the part
 
 - **Top plate:** the BMG bolts on with 2× M3×8 screws, going down through its flange into M3 heat-set inserts at ±18.5 mm. The PTFE tube passes straight through on the filament axis.
@@ -19,6 +21,7 @@ Print the adapter upside down (top plate on the bed). Print the ducts flange-dow
 
 | Path | Contents |
 |---|---|
+| `ASSEMBLY.md` | Bill of materials and assembly steps |
 | `output/toolhead_adapter.stl` / `.step` | The printable adapter |
 | `output/duct.stl` / `.step` | Part-cooling duct, print 2 |
 | `output/render_*.png` | Renders of the adapter, the duct and the full assembly |
