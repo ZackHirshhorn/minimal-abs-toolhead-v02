@@ -115,6 +115,24 @@ Press each insert in square to the face until it sits flush. Let it cool before 
    - Filament feeds through smoothly.
 4. Re-tighten the nozzle hot as usual for the TZ-V6.
 
+## MGN7H carriage mount (Voron 0.2)
+
+`output/carriage_mount.stl`: print 1 in ABS/ASA, upside down (flat top face on the bed).
+
+The mount is an L-bracket. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange sits against the adapter's back face. It shares the two hotend-mount screws, which changes step 2 and step 4:
+
+- **Step 2:** skip the 2 back tab inserts. Put those 2 inserts in the flange instead, pressed in from its front face (the face that touches the adapter).
+- **Step 4:** use 2× M3×35 instead of M3×30. They go through the front plate, the mount module and the back tab, then into the flange inserts.
+
+To fit it:
+
+1. Bolt the mount to the carriage with 4× M2×5 socket head screws. Use 5 mm, no longer, or the screws hit the rail.
+2. Hold the toolhead against the flange and drive the 2× M3×35 in from the front.
+
+To take the toolhead off, remove those 2 screws. The mount stays on the carriage.
+
+The flange covers the back of the mount module, so route the hotend wires out to the side.
+
 ## Replacing a duct
 
 Remove its 2 screws, fit the new duct, and screw it back in. Nothing else has to come off.

@@ -24,7 +24,9 @@ Print the adapter upside down (top plate on the bed). Print the ducts flange-dow
 | `ASSEMBLY.md` | Bill of materials and assembly steps |
 | `output/toolhead_adapter.stl` / `.step` | The printable adapter |
 | `output/duct.stl` / `.step` | Part-cooling duct, print 2 |
-| `output/render_*.png` | Renders of the adapter, the duct and the full assembly |
+| `output/carriage_mount.stl` / `.step` | MGN7H carriage mount (Voron 0.2 X axis), bolts to the adapter's back face |
+| `output/render_*.png` | Renders of the adapter, the duct, the carriage mount and the full assembly |
+| `cad/carriage_mount.py` | Parametric carriage mount, in the same frame as the adapter |
 | `cad/toolhead_adapter.py` | Parametric build123d model; every dimension is a named constant at the top |
 | `cad/render.py`, `cad/inspect_step.py`, `cad/list_step_*.py` | Helpers to render and inspect STEP files |
 
