@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+
+# Third-party models: not redistributed here, download them yourself (see README)
+/Wristwatch BMG v3.step
+/hotend_mount.STEP
+/3010 fan.step
+/3010 blower.STEP
+# Contains the third-party models above
+/output/toolhead_assembly.step
