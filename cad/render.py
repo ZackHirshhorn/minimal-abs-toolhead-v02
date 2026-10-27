@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from build123d import import_step
 
-COLORS = ["#8ab4f8", "#f6ae2d", "#e15759", "#59a14f", "#b07aa1", "#76b7b2"]
+COLORS = ["#8ab4f8", "#f6ae2d", "#e15759", "#59a14f", "#b07aa1", "#76b7b2", "#9c755f"]
 VIEWS = {"iso": (25, -60), "front (-Y)": (0, -90), "right (+X)": (0, 0), "top (+Z)": (90, -90)}
 
 

@@ -6,5 +6,6 @@ __pycache__/
 /hotend_mount.STEP
 /3010 fan.step
 /3010 blower.STEP
+/assy hotend kit.stp
 # Contains the third-party models above
 /output/toolhead_assembly.step
