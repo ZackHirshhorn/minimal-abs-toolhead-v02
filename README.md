@@ -33,16 +33,23 @@ Print the adapter upside down (top plate on the bed). Print the ducts (2 copies 
 | `output/*/render_*.png` | Renders of the adapter, the duct, the carriage mount and the full assembly |
 | `cad/carriage_mount.py` | Parametric carriage mount, in the same frame as the adapter |
 | `cad/toolhead_adapter.py` | Parametric build123d model; every dimension is a named constant at the top |
+| `third_party/` | Third-party models and reference material, not in git (see Rebuilding) |
 | `cad/render.py`, `cad/inspect_step.py`, `cad/list_step_*.py` | Helpers to render and inspect STEP files |
 
 ## Rebuilding
 
-The model places third-party parts to check fit, and those parts aren't redistributed here. Before running the script, put these files in the repo root:
+The model places third-party parts to check fit, and those parts aren't redistributed here. They live in `third_party/`, which git ignores. On a new clone, copy that folder over from another machine. It holds:
 
 - `Wristwatch BMG v3.step`: the Wristwatch BMG assembly
 - `hotend_mount.STEP`: the TZ-V6 2.0 mount module ([Printables 704371](https://www.printables.com/model/704371-voron-v02-mount-for-tz-v2-tz-v6-20)). Its outside matches the official Voron 0.2 Mini Stealthburner hotend mounts
 - `3010 fan.step`: a 30×30×10 axial fan
 - `3010 blower.STEP`: a 30×30×10 radial blower
+
+Reference only, not loaded by the scripts:
+
+- `hotend mounts voron 0/`: the official Voron 0.2 hotend mounts, used to check `hotend_mount.STEP`
+- `tzv6 unofficial.jpg`: the TZ-V6 2.0 dimension drawing
+- `photos/`: photos of the actual fan and blower
 
 There's no model of the TZ-V6 2.0 hotend. The script builds a simple stand-in (heatsink, heat break, heater, nozzle) from the dimensions on Trianglelab's drawing. These are the `HE_*` constants: 45.6 mm from the heatsink top face to the nozzle tip, and a 10 × 8.2 × 17 mm heater.
 

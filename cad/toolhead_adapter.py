@@ -26,6 +26,7 @@ from build123d import (
 ROOT = Path(__file__).resolve().parent.parent
 NUTS = "--nuts" in sys.argv  # captive-nut version (see the module docstring)
 OUT = ROOT / "output" / ("nuts" if NUTS else "inserts")
+VENDOR = ROOT / "third_party"   # third-party models, not in git (see README)
 
 # ---------------------------------------------------------------- parameters
 # Wristwatch BMG (from "Wristwatch BMG v3.step", body 0 = complete assembly)
@@ -388,14 +389,14 @@ def build_hotend():
 
 
 def load_vendor():
-    bmg = import_step(ROOT / "Wristwatch BMG v3.step").solids()
+    bmg = import_step(VENDOR / "Wristwatch BMG v3.step").solids()
     return {
         "bmg": LOC_BMG * Compound([bmg[i] for i in BMG_SOLIDS]),
-        "hotend_mount": LOC_MOUNT * import_step(ROOT / "hotend_mount.STEP"),
+        "hotend_mount": LOC_MOUNT * import_step(VENDOR / "hotend_mount.STEP"),
         "hotend": build_hotend(),
-        "fan_3010": LOC_FAN * import_step(ROOT / "3010 fan.step"),
-        "blower_R": LOC_BLOWER_R * import_step(ROOT / "3010 blower.STEP"),
-        "blower_L": LOC_BLOWER_L * import_step(ROOT / "3010 blower.STEP"),
+        "fan_3010": LOC_FAN * import_step(VENDOR / "3010 fan.step"),
+        "blower_R": LOC_BLOWER_R * import_step(VENDOR / "3010 blower.STEP"),
+        "blower_L": LOC_BLOWER_L * import_step(VENDOR / "3010 blower.STEP"),
     }
 
 

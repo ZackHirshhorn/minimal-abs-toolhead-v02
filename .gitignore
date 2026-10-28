@@ -1,15 +1,8 @@
 __pycache__/
 *.pyc
 
-# Third-party models: not redistributed here, download them yourself (see README)
-/Wristwatch BMG v3.step
-/hotend_mount.STEP
-/3010 fan.step
-/3010 blower.STEP
-/hotend mounts voron 0/
+# Third-party models and reference material: not redistributed here (see README).
+# Copy this folder between machines.
+/third_party/
 # Contains the third-party models above
 /output/*/toolhead_assembly.step
-
-# Reference photos and drawings
-/*.jpg
-/*.jpeg
