@@ -2,7 +2,11 @@
 
 Parametric build123d model. Run with a Python env that has build123d:
     python cad/toolhead_adapter.py            # builds part + assembly + checks + renders
-Outputs go to ../output/.
+    python cad/toolhead_adapter.py --nuts     # captive-nut version
+Outputs go to ../output/inserts/ or ../output/nuts/.
+
+Captive-nut version: no heat-set inserts and no self-tapping screws. M3 nuts sit in pockets and slots (BMG,
+back tab, duct lugs), and the 3010 fan and both blowers snap into cradles with no screws.
 
 Frame used throughout (mm):
     origin = filament axis on the BMG's bottom face
@@ -13,18 +17,21 @@ Printed parts: the adapter, and a duct (x2) that screws to the shelf under each 
 """
 from pathlib import Path
 import math
+import sys
 from build123d import (
-    Axis, Box, Compound, Cylinder, Location, Plane, Pos, Rectangle, Rot, Vector,
-    export_step, export_stl, import_step, loft,
+    Axis, Box, Compound, Cone, Cylinder, Location, Plane, Polygon, Pos, Rectangle, RegularPolygon, Rot, Vector,
+    export_step, export_stl, extrude, import_step, loft,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "output"
+NUTS = "--nuts" in sys.argv  # captive-nut version (see the module docstring)
+OUT = ROOT / "output" / ("nuts" if NUTS else "inserts")
 
 # ---------------------------------------------------------------- parameters
 # Wristwatch BMG (from "Wristwatch BMG v3.step", body 0 = complete assembly)
 BMG_FILAMENT = Vector(-21.96, 103.24, 158.6)  # filament axis on bottom face, in the BMG file's coords
-BMG_HOLE_X = 18.5            # 2x M3 at +-18.5 on the filament line (screws come down through the BMG flange)
+BMG_HOLE_X = 17.5            # 2x M3 at +-17.5 on the filament line (screws come down through the BMG flange)
+BMG_FLANGE_T = 3.0           # BMG flange the screws pass through
 BMG_FOOT_Y = (-14.54, 7.96)  # BMG bottom face Y extent
 MOTOR_Y = 13.96              # motor sits behind this Y and dips ~0.6 mm below z=0
 
@@ -40,13 +47,14 @@ HM_FAN_DROP = 21.5           # centre of the 28 mm fan opening below mount top
 
 HM_SEAT_DROP = 12.9          # heatsink top face below the mount top (underside of the mount's plate, z=-8.6 in its file)
 
-# Hotend (assy hotend kit.stp, axis along kit Y). Used like the Mini Stealthburner: without the kit's top
-# part (solid 1), so the heatsink's own top face (kit Y=-16.5) seats on the mount and takes its 4 screws.
-HE_SOLIDS = [0, 2]           # heatsink, nozzle + heater
-HE_TOP_Y = -16.5             # heatsink top face in the kit file
-HE_TIP = 46.0                # nozzle tip below the heatsink top face (kit Y=-62.5)
-HE_BLOCK = (14.0, 11.0)      # heater block footprint (kit X, kit Z); 20 mm tall, bottom 3 mm above the tip
-HOTEND_ROT = 0               # about the nozzle axis; the mount's 4 screws allow 0/90. 0 = 14 mm side faces the ducts (worst case)
+# Hotend: TZ-V6 2.0, from Trianglelab's dimension drawing. There is no vendor model: build_hotend() makes a
+# stand-in from these. Used like the Mini Stealthburner: without the kit's top part, so the heatsink's top face
+# seats on the mount and takes its 4 M2.5 screws (11.5 mm square).
+HE_SINK_D, HE_SINK_H = 22.0, 20.0   # heatsink; its bottom is 25.6 above the tip
+HE_TIP = 45.6                # nozzle tip below the heatsink top face
+HE_BLOCK = (10.0, 8.2)       # ceramic heater footprint incl. its ears (along X, along Y at HOTEND_ROT=0)
+HE_BLOCK_H, HE_BLOCK_LO = 17.0, 3.5  # heater height, and its bottom above the tip (scaled off the drawing)
+HOTEND_ROT = 0               # about the nozzle axis; the mount's 4 screws allow 0/90. 0 = 10 mm side faces the ducts (worst case)
 
 # Printed part
 FIT = 0.1                    # clearance per side where the mount slides between front/back plates
@@ -54,16 +62,27 @@ PLATE_T = 6.0                # top plate thickness (mount top sits at z = -PLATE
 PLATE_HALF_X = 23.5
 FRONT_T = 4.0                # fan plate (between mount face and 3010 fan)
 FAN_PLATE_MARGIN = 2.0       # fan plate runs this far below the 3010 fan's bottom edge
-BACK_T = 4.0                 # back tab that takes the mount screws
+BACK_T = 5.0 if NUTS else 4.0  # back tab that takes the mount screws (thicker behind a nut pocket)
 BACK_TAB_H = 8.0
 MOTOR_RELIEF = (13.0, 1.5)   # (from Y, depth) step on the top-back edge under the motor
 INSERT_D, INSERT_L = 4.0, 4.0  # M3 heat-set inserts (M3x5x4 style); set to your inserts
 M3_CLEAR, M3_HEAD_D, M3_HEAD_RECESS = 3.4, 6.0, 2.0
 FILAMENT_D = 4.2             # PTFE passes BMG -> adapter -> mount
 
+# Captive-nut version
+NUT_AF, NUT_T = 5.7, 2.7     # pocket across flats / thickness for M3 nuts (5.5 x 2.4)
+BMG_NUT_ROOF = 2.5           # top plate above the BMG nut slots (slots run in from the side edges)
+CRADLE_FIT = 0.15            # per side, fan and blowers in their snap-in cradles
+CRADLE_WALL = 1.6
+SNAP_LIP = (1.0, 1.2)        # lip overlap onto the fan/blower's outer face, lip thickness (ramped for snapping in)
+SNAP_GAP = 0.5               # slot that frees a blower cradle wall from the shelf so it can flex
+FAN_PEG_D, FAN_PEG_L = 2.8, 3.0  # pegs into the fan's two lower holes
+BL_WIRE_X = (-10.0, -2.0)    # notch for the blower's wire, in blower-local x; it leaves the local +z side
+
 # Fan 3010 (axial, heatsink)
 FAN_HOLE = 12.0              # holes at +-12, +-12
 FAN_BORE = 28.0
+SNAP_LIP_Z = 7.0             # fan/blower lips only beyond this distance from its centre (corners, clear of the inlet)
 
 # Blower 3010 (local file coords: 30x30 face in XZ, thickness Y 0..10, inlet on +Y face,
 # outlet on -X edge spanning z -12..9, y 1.5..9, mounting holes at (x,z)=(12,-12),(-12,12))
@@ -84,8 +103,8 @@ DUCT_CLEAR = 3.0             # lowest point of duct above nozzle tip
 DUCT_AIM_BELOW_TIP = 0.0     # aim point relative to tip
 SHELF_T = 4.0                # shelf under the blower outlet (part of the adapter)
 DUCT_FLANGE_T = 2.0          # duct flange that screws to the shelf underside
-DUCT_SCREW_Y = 18.0          # 2x M2.5x8 self-tapping per duct, just outside the blower's +-15 footprint
-DUCT_SCREW_CLEAR = 2.8
+DUCT_SCREW_Y = 20.5 if NUTS else 18.0  # 2 screws per duct, outside the blower's +-15 footprint (and its cradle)
+DUCT_SCREW_CLEAR = M3_CLEAR if NUTS else 2.8  # M3x10 into a nut on the lug, or M2.5x8 self-tapping
 LUG_H = 4.0                  # screw lugs above the shelf, beside the blower, for thread length
 
 # Fillets. None inside the box (the mount slides in with FIT), in the blower's seat, or on the top face
@@ -97,6 +116,8 @@ R_WINDOW = 2.0               # arm window corners
 
 # ------------------------------------------------------------- derived values
 MOUNT_TOP = -PLATE_T
+BMG_SCREW_L = 10.0 if NUTS else 8.0
+BMG_SCREW_DEPTH = BMG_SCREW_L - BMG_FLANGE_T   # BMG screw tip below the top face
 NOZZLE_BELOW_MOUNT_TOP = HM_SEAT_DROP + HE_TIP
 NOZZLE_Z = MOUNT_TOP - NOZZLE_BELOW_MOUNT_TOP
 BLOCK_HALF_X = HE_BLOCK[0] / 2 if HOTEND_ROT % 180 == 0 else HE_BLOCK[1] / 2
@@ -114,8 +135,11 @@ FLANGE_LO = SHELF_LO - DUCT_FLANGE_T
 OUT_X = (BL_X0 + BL_OUT_Y[0], BL_X0 + BL_OUT_Y[1])         # blower outlet in world X
 OUT_Y = (BLOWER_Y + BL_OUT_Z[0], BLOWER_Y + BL_OUT_Z[1])   # ...and world Y
 SHELF_X = (ARM_X0, BL_X0 + 10.5)
-SHELF_HALF_Y = DUCT_SCREW_Y + 2.5
+SHELF_HALF_Y = DUCT_SCREW_Y + (3.5 if NUTS else 2.5)
 DUCT_SCREW_X = sum(OUT_X) / 2
+ARM_HALF_Y = 15.0 + CRADLE_FIT + CRADLE_WALL if NUTS else 15.5  # the blower cradle's walls grow off the arm ends
+LUG_Y0 = ARM_HALF_Y + SNAP_GAP if NUTS else 15.3
+FAN_FACE_Y = Y_FRONT_OUT - 10.0 - CRADLE_FIT  # fan's outer (intake) face, against the cradle lips
 
 
 def box(x0, x1, y0, y1, z0, z1):
@@ -153,6 +177,26 @@ def cyl_z(d, x, y, z0, z1):
     return Pos(x, y, (z0 + z1) / 2) * Cylinder(d / 2, abs(z1 - z0))
 
 
+def nut_pocket(axis, a, b, l0, l1, corners):
+    """Hex pocket for an M3 nut along axis "z" (at x=a, y=b) or "y" (at x=a, z=b), from l0 to l1 on that axis.
+    corners: the world axis its corners point along ("x", or "y"/"z" across the other way)."""
+    hexagon = RegularPolygon(NUT_AF / math.sqrt(3), 6)          # corners along local X
+    if corners != "x":
+        hexagon = Rot(0, 0, 90) * hexagon
+    prism = extrude(hexagon, abs(l1 - l0))
+    if axis == "z":
+        return Pos(a, b, min(l0, l1)) * prism
+    return Pos(a, max(l0, l1), b) * Rot(90, 0, 0) * prism       # local Z -> -Y, local Y -> Z
+
+
+def prism_z(pts, z0, z1):
+    """Prism over an XY polygon, from z0 to z1."""
+    area2 = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]))
+    if area2 < 0:                                                # counter-clockwise, so it extrudes up
+        pts = pts[::-1]
+    return Pos(0, 0, z0) * extrude(Polygon(*pts, align=None), z1 - z0)
+
+
 # --------------------------------------------------------- vendor placements
 BLOWER_PLANE = Plane(origin=(BL_X0, BLOWER_Y, BLOWER_Z), x_dir=(0, 0, 1), z_dir=(0, 1, 0))
 # blower local (x, y, z) -> world (x0 + y, Y + z, Z + x): outlet (-X local) points down, inlet faces out
@@ -166,7 +210,6 @@ LOC_MOUNT = Pos(0, -HM_AXIS_Y, MOUNT_TOP + HM_TOP_Z) * Rot(0, 180, 0)
 LOC_FAN = Pos(0, Y_FRONT_OUT - 5.0, FAN_Z) * Rot(-90, 0, 0) * Pos(225.0, 0, -295.02)  # hub side faces heatsink
 LOC_BLOWER_R = Location(BLOWER_PLANE)
 LOC_BLOWER_L = Rot(0, 0, 180) * LOC_BLOWER_R
-LOC_HOTEND = Pos(0, 0, MOUNT_TOP - HM_SEAT_DROP) * Rot(0, 0, HOTEND_ROT) * Rot(90, 0, 0) * Pos(0, -HE_TOP_Y, 0)  # kit Y -> world Z
 LOC_BMG = Pos(-BMG_FILAMENT)
 BMG_SOLIDS = [0, 2, 3, 6] + list(range(7, 33))  # complete extruder (body 0 + arm + plate "SOLID" + hardware)
 
@@ -175,18 +218,48 @@ BMG_SOLIDS = [0, 2, 3, 6] + list(range(7, 33))  # complete extruder (body 0 + ar
 def blower_side():
     """Arm + duct shelf for the +X blower; the -X side is this rotated 180 deg about Z."""
     holes = [blower_world(x, 0, z) for x, z in BL_HOLES]
-    arm = box(ARM_X0, BL_X0, -15.5, 15.5, SHELF_LO, 0)
+    arm = box(ARM_X0, BL_X0, -ARM_HALF_Y, ARM_HALF_Y, SHELF_LO, 0)
     window = box(ARM_X0 - 1, BL_X0 + 1, -7.5, 7.5, BLOWER_Z - 9, BLOWER_Z + 9)
     arm = arm - window.fillet(R_WINDOW, window.edges().filter_by(Axis.X))
     shelf = shelf_box(SHELF_LO, OUT_LO)
-    lugs = [box(*OUT_X, 15.3, SHELF_HALF_Y, OUT_LO, OUT_LO + LUG_H),
-            box(*OUT_X, -SHELF_HALF_Y, -15.3, OUT_LO, OUT_LO + LUG_H)]
-    lugs = [lug.fillet(R_SMALL, lug.edges().filter_by(Axis.Z)) for lug in lugs]
+    lug_top = OUT_LO + LUG_H
+    if NUTS:   # lugs follow the shelf's rounded outline, out past the cradle walls
+        lugs = [shelf_box(OUT_LO, lug_top) & box(ARM_X0 - 1, 40, *sorted((sy * LUG_Y0, sy * 40)), OUT_LO - 1, lug_top + 1)
+                for sy in (1, -1)]
+    else:
+        lugs = [box(*OUT_X, LUG_Y0, SHELF_HALF_Y, OUT_LO, lug_top), box(*OUT_X, -SHELF_HALF_Y, -LUG_Y0, OUT_LO, lug_top)]
+        lugs = [lug.fillet(R_SMALL, lug.edges().filter_by(Axis.Z)) for lug in lugs]
     solid = arm + shelf + lugs[0] + lugs[1]
     cuts = [box(*OUT_X, *OUT_Y, SHELF_LO - 1, OUT_LO + 0.01)]                  # air passage
-    cuts += [cyl_x(BL_PILOT, p.Y, p.Z, ARM_X0 - 1, BL_X0 + 1) for p in holes]
-    cuts += [cyl_z(BL_PILOT, DUCT_SCREW_X, sy * DUCT_SCREW_Y, SHELF_LO - 1, OUT_LO + LUG_H - 1) for sy in (-1, 1)]
+    if NUTS:
+        solid = solid + blower_cradle()
+        for sy in (-1, 1):   # M3x10 up through the duct flange and shelf, into a nut dropped in on top of the lug
+            y = sy * DUCT_SCREW_Y
+            cuts += [cyl_z(M3_CLEAR, DUCT_SCREW_X, y, SHELF_LO - 1, lug_top + 1),
+                     nut_pocket("z", DUCT_SCREW_X, y, lug_top - NUT_T, lug_top + 1, "x")]
+        # notch for the wire, which leaves the blower's back side (+Y) near the outlet end
+        cuts.append(box(BL_X0, 40, 14.0, ARM_HALF_Y + 1, BLOWER_Z + BL_WIRE_X[0], BLOWER_Z + BL_WIRE_X[1]))
+    else:
+        cuts += [cyl_x(BL_PILOT, p.Y, p.Z, ARM_X0 - 1, BL_X0 + 1) for p in holes]
+        cuts += [cyl_z(BL_PILOT, DUCT_SCREW_X, sy * DUCT_SCREW_Y, SHELF_LO - 1, lug_top - 1) for sy in (-1, 1)]
     return solid, Compound(cuts)
+
+
+def blower_cradle():
+    """Snap-in cradle for the +X blower: a block filling the gap above it up to the top plate (reaching the
+    top face, so it prints on the bed), and front/back walls growing off the arm ends. The walls are free of the
+    shelf (SNAP_GAP), so they flex as the blower is pushed in; ramped lips at their bottom outer corners then
+    hold its outer face. The block above stops it from tipping out about those lips."""
+    x1 = BL_X0 + 10.0 + CRADLE_FIT                       # blower outer face, plus fit
+    x2 = x1 + SNAP_LIP[1]
+    top = box(BL_X0, x2, -ARM_HALF_Y, ARM_HALF_Y, BLOWER_Z + 15.0 + CRADLE_FIT, 0)
+    y_in = 15.0 + CRADLE_FIT
+    cradle = top
+    for sy in (-1, 1):
+        cradle = cradle + box(BL_X0 - 0.01, x2, *sorted((sy * y_in, sy * ARM_HALF_Y)), OUT_LO + SNAP_GAP, 0)
+        lip = [(x1, sy * y_in), (x1, sy * (y_in - SNAP_LIP[0])), (x2, sy * y_in)]
+        cradle = cradle + prism_z(lip, OUT_LO + SNAP_GAP, BLOWER_Z - SNAP_LIP_Z)
+    return cradle
 
 
 def duct_exit():
@@ -239,6 +312,8 @@ def build_part():
             - cyl_y(2 * r, BL_X0 + r, -PLATE_T - r, -SHELF_HALF_Y - 1, SHELF_HALF_Y + 1))
     roots = [(rr & Pos(0, 0, -PLATE_T) * top) for rr in (root, Rot(0, 0, 180) * root)]
     part = top + front + back + side_r + side_l + roots[0] + roots[1]
+    if NUTS:
+        part = part + fan_cradle()
 
     cuts = [
         box(-50, 50, MOTOR_RELIEF[0], 50, -MOTOR_RELIEF[1], 1),                 # under the motor
@@ -247,27 +322,77 @@ def build_part():
         cuts_r, cuts_l,
     ]
     for sx in (-1, 1):
+        x = sx * HM_SCREW_X
         cuts += [
-            cyl_z(INSERT_D, sx * BMG_HOLE_X, 0, -PLATE_T, 1),                   # BMG screws (insert from top)
-            cyl_y(M3_CLEAR, sx * HM_SCREW_X, SCREW_Z, Y_FRONT_OUT - 1, Y_BACK_IN),  # mount screws
-            cyl_y(M3_HEAD_D, sx * HM_SCREW_X, SCREW_Z, Y_FRONT_OUT - 1, Y_FRONT_OUT + M3_HEAD_RECESS),
-            cyl_y(INSERT_D, sx * HM_SCREW_X, SCREW_Z, Y_BACK_OUT - INSERT_L - 0.5, Y_BACK_OUT + 1),
+            cyl_y(M3_CLEAR, x, SCREW_Z, Y_FRONT_OUT - 1, Y_BACK_IN),            # mount screws
+            cyl_y(M3_HEAD_D, x, SCREW_Z, Y_FRONT_OUT - 1, Y_FRONT_OUT + M3_HEAD_RECESS),
         ]
-        for sz in (-1, 1):                                                      # fan inserts
-            cuts.append(cyl_y(INSERT_D, sx * FAN_HOLE, FAN_Z + sz * FAN_HOLE, Y_FRONT_OUT - 1, Y_FRONT_IN + 0.01))
+        if NUTS:
+            # BMG screws: M3x10 down into a nut slid in from the side edge, under BMG_NUT_ROOF of plate
+            bx, nz = sx * BMG_HOLE_X, -BMG_NUT_ROOF
+            cuts += [cyl_z(M3_CLEAR, bx, 0, -BMG_SCREW_DEPTH - 1, 1),
+                     nut_pocket("z", bx, 0, nz - NUT_T, nz, "x"),
+                     box(*sorted((bx, sx * 40)), -NUT_AF / 2, NUT_AF / 2, nz - NUT_T, nz),
+                     # mount screws: nut in a pocket in the back face, corners up/down so it prints unsupported
+                     nut_pocket("y", x, SCREW_Z, Y_BACK_OUT - NUT_T, Y_BACK_OUT + 1, "z")]
+        else:
+            cuts += [cyl_z(INSERT_D, sx * BMG_HOLE_X, 0, -PLATE_T, 1),          # BMG screws (insert from top)
+                     cyl_y(INSERT_D, x, SCREW_Z, Y_BACK_OUT - INSERT_L - 0.5, Y_BACK_OUT + 1)]
+            for sz in (-1, 1):                                                  # fan inserts
+                cuts.append(cyl_y(INSERT_D, sx * FAN_HOLE, FAN_Z + sz * FAN_HOLE, Y_FRONT_OUT - 1, Y_FRONT_IN + 0.01))
     for c in cuts:
         part = part - c
     return part.solids()[0] if len(part.solids()) == 1 else part
 
 
+def fan_cradle():
+    """Snap-in cradle for the 3010 fan on the front plate: side walls with ramped lips over its outer face's
+    corners, and two pegs into its lower holes so it can't slide. No top wall: the mount screws' heads are there."""
+    x_in = 15.0 + CRADLE_FIT
+    y_lip = FAN_FACE_Y - SNAP_LIP[1]
+    z0, z1 = FAN_Z - 15.0, FAN_Z + 15.0
+    cradle = None
+    for sx in (-1, 1):
+        wall = box(*sorted((sx * x_in, sx * (x_in + CRADLE_WALL))), y_lip, Y_FRONT_OUT + 0.01, z0, z1)
+        lip = [(sx * x_in, FAN_FACE_Y), (sx * (x_in - SNAP_LIP[0]), FAN_FACE_Y), (sx * x_in, y_lip)]
+        wall = wall + prism_z(lip, z0, FAN_Z - SNAP_LIP_Z) + prism_z(lip, FAN_Z + SNAP_LIP_Z, z1)
+        peg = cyl_y(FAN_PEG_D, sx * FAN_HOLE, FAN_Z - FAN_HOLE, Y_FRONT_OUT - FAN_PEG_L, Y_FRONT_OUT + 0.01)
+        cradle = wall + peg if cradle is None else cradle + wall + peg
+    return cradle
+
+
+def build_fit_test(part):
+    """Two small pieces cut from the adapter to check the snap fits before printing it all, laid out for printing:
+    the fan cradle on a 2 mm slice of the front plate (plate face down), and the right blower's cradle with its
+    shelf, lugs and the BMG nut slot (top face down, as in the adapter)."""
+    fan = part & box(-19, 19, FAN_FACE_Y - 5, Y_FRONT_OUT + 2.0, FAN_Z - 18, FAN_Z + 18)
+    blower = part & box(ARM_X0, 40, -SHELF_HALF_Y - 1, SHELF_HALF_Y + 1, SHELF_LO - 1, 1)
+    fan, blower = on_bed(fan, Rot(-90, 0, 0)), on_bed(blower, PRINT_ROT)   # Rot(-90, 0, 0): +Y face down
+    gap = 4.0
+    return Compound([Pos(-fan.bounding_box().size.X / 2 - gap / 2, 0, 0) * fan,
+                     Pos(blower.bounding_box().size.X / 2 + gap / 2, 0, 0) * blower])
+
+
 # ------------------------------------------------------------ vendor geometry
+def build_hotend():
+    """Stand-in TZ-V6 2.0 from the drawing: heatsink, heat break, nozzle, heater (last: used for the duct gap)."""
+    top = MOUNT_TOP - HM_SEAT_DROP
+    block_lo = NOZZLE_Z + HE_BLOCK_LO
+    bx, by = HE_BLOCK if HOTEND_ROT % 180 == 0 else HE_BLOCK[::-1]
+    return Compound([
+        cyl_z(HE_SINK_D, 0, 0, top - HE_SINK_H, top),
+        cyl_z(5.0, 0, 0, block_lo + HE_BLOCK_H, top - HE_SINK_H),
+        Pos(0, 0, NOZZLE_Z + HE_BLOCK_LO / 2) * Cone(0.5, 3.5, HE_BLOCK_LO),
+        box(-bx / 2, bx / 2, -by / 2, by / 2, block_lo, block_lo + HE_BLOCK_H),
+    ])
+
+
 def load_vendor():
     bmg = import_step(ROOT / "Wristwatch BMG v3.step").solids()
-    he = import_step(ROOT / "assy hotend kit.stp").solids()
     return {
         "bmg": LOC_BMG * Compound([bmg[i] for i in BMG_SOLIDS]),
         "hotend_mount": LOC_MOUNT * import_step(ROOT / "hotend_mount.STEP"),
-        "hotend": LOC_HOTEND * Compound([he[i] for i in HE_SOLIDS]),
+        "hotend": build_hotend(),
         "fan_3010": LOC_FAN * import_step(ROOT / "3010 fan.step"),
         "blower_R": LOC_BLOWER_R * import_step(ROOT / "3010 blower.STEP"),
         "blower_L": LOC_BLOWER_L * import_step(ROOT / "3010 blower.STEP"),
@@ -305,25 +430,42 @@ def interference(a, b):
     return msg
 
 
+PRINT_ROT = Rot(180, 0, 0)   # every part prints upside down, on its flat top face
+
+
+def on_bed(shape, rot):
+    """shape turned by rot, centred on the origin with its lowest point on z=0."""
+    shape = rot * shape
+    bb = shape.bounding_box()
+    return Pos(-(bb.min.X + bb.max.X) / 2, -(bb.min.Y + bb.max.Y) / 2, -bb.min.Z) * shape
+
+
+def export(shape, name, rot=PRINT_ROT):
+    """STEP in the assembly frame, STL turned to its print orientation (rot=None: already laid out)."""
+    export_step(shape, OUT / f"{name}.step")
+    stl = shape if rot is None else on_bed(shape, rot)
+    export_stl(stl, OUT / f"{name}.stl", tolerance=0.01, angular_tolerance=0.1)
+
+
 def main(render_png=True):
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     part = build_part()
     part.label = "toolhead_adapter"
-    export_step(part, OUT / "toolhead_adapter.step")
-    export_stl(part, OUT / "toolhead_adapter.stl", tolerance=0.01, angular_tolerance=0.1)
+    export(part, "toolhead_adapter")
     print(f"part: {len(part.solids())} solid(s), volume {part.volume:.0f} mm3, bbox {part.bounding_box().size}")
     duct = build_duct()
     duct.label = "duct"
-    export_step(duct, OUT / "duct.step")
-    export_stl(duct, OUT / "duct.stl", tolerance=0.01, angular_tolerance=0.1)
+    export(duct, "2x_duct")
     print(f"duct (print 2): volume {duct.volume:.0f} mm3, bbox {duct.bounding_box().size}")
+    if NUTS:
+        export(build_fit_test(part), "fit_test", rot=None)
     printed = {"adapter": part, "duct_R": duct, "duct_L": Rot(0, 0, 180) * duct}
 
     vendor = load_vendor()
     for k, v in list(vendor.items()) + list(printed.items()):
         v.label = k
     asm = Compound(list(printed.values()) + list(vendor.values()))
-    export_step(asm, OUT / "toolhead_assembly.step")
+    export_step(asm, OUT / f"toolhead_assembly.step")
 
     print("interference volumes (mm3):")
     names = list(vendor)
@@ -340,14 +482,20 @@ def main(render_png=True):
           f"duct lowest z={duct.bounding_box().min.Z:.1f}")
     print(f"duct exit r={duct_exit()[0].X:.1f}; gap duct to heater block: R {printed['duct_R'].distance_to(block):.2f}, "
           f"L {printed['duct_L'].distance_to(block):.2f} mm")
+    print(f"BMG screws M3x{BMG_SCREW_L:.0f}: tip {BMG_SCREW_DEPTH:.1f} below the top face"
+          + (f", nut {BMG_NUT_ROOF:.1f}..{BMG_NUT_ROOF + 2.4:.1f}" if NUTS else f", insert 0..{INSERT_L:.1f}"))
+    head = Y_FRONT_OUT + M3_HEAD_RECESS
+    print(f"mount screws M3x30: tip {head + 30 - Y_BACK_OUT:+.2f} past the back face"
+          + (f" (needs > {2.4 - NUT_T:+.1f} to pass through the nut)" if NUTS else ""))
 
     if render_png:
-        import sys
         sys.path.insert(0, str(Path(__file__).parent))
         from render import render
         ducts = Compound([printed["duct_R"], printed["duct_L"]])
         render(OUT / "render_part.png", [part, ducts], "adapter(blue) + 2 ducts(orange)")
-        render(OUT / "render_duct.png", [duct], "duct (print 2)")
+        render(OUT / "render_2x_duct.png", [duct], "duct (print 2)")
+        if NUTS:
+            render(OUT / "render_fit_test.png", [build_fit_test(part)], "fit test: fan cradle, blower cradle")
         render(OUT / "render_assembly.png",
                [part, vendor["hotend_mount"], vendor["fan_3010"], Compound([vendor["blower_R"], vendor["blower_L"]]),
                 vendor["bmg"], ducts, vendor["hotend"]],

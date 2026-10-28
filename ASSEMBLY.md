@@ -1,6 +1,6 @@
 # Assembly
 
-![assembly](output/render_assembly.png)
+![assembly](output/inserts/render_assembly.png)
 
 Directions used below: **front** is the 3010 fan side, **back** is the BMG motor side, **left/right** are the blower sides.
 
@@ -10,8 +10,10 @@ Directions used below: **front** is the 3010 fan side, **back** is the BMG motor
 
 | Qty | Part | File | Material | Orientation |
 |---|---|---|---|---|
-| 1 | Adapter | `output/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed |
-| 2 | Duct (both sides use the same part) | `output/duct.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
+| 1 | Adapter | `output/inserts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed |
+| 2 | Duct (both sides use the same part) | `output/inserts/2x_duct.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
+
+The STL files are already turned to these orientations and sit on the bed. Import them as they are.
 
 ### Purchased parts
 
@@ -35,7 +37,7 @@ Directions used below: **front** is the 3010 fan side, **back** is the BMG motor
 | 4 | M3×12 screw | 3010 fan to the front plate. Don't go longer than 14 mm, or the screws hit the hotend mount |
 | 4 | M2.5 self-tapping screw | Blowers to the arms, 2 each. Length = blower ear thickness + up to 3 mm (M2.5×12 for full-height 10 mm ears). Any longer and the tip hits the hotend mount |
 | 4 | M2.5×8 self-tapping screw | Ducts to the shelves, 2 each |
-| 4 | Hotend screws | Heatsink to the mount module. Use the ones from the hotend kit, as on the Mini Stealthburner |
+| 4 | M2.5×6 hotend screws | Heatsink to the mount module. Use the ones from the hotend kit, as on the Mini Stealthburner |
 
 If your inserts aren't Ø5 × 4 mm, change `INSERT_D` / `INSERT_L` in `cad/toolhead_adapter.py` and rebuild before printing.
 
@@ -63,7 +65,7 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 
 1. Leave out the kit's top part. The heatsink's top face seats directly on the underside of the mount's plate.
 2. Fix the heatsink with its 4 screws.
-3. Rotate the hotend so the heater block's 14 mm length runs left–right, toward the blowers. The ducts are sized for this. Turning it 90° also works and adds 1.5 mm of duct clearance.
+3. Rotate the hotend so the heater's 10 mm side (the one with the ears) runs left–right, toward the blowers. The ducts are sized for this. Turning it 90° also works and adds 0.9 mm of duct clearance.
 4. Fit the silicone sock.
 5. Route the heater and thermistor wires up along the back of the mount.
 
@@ -96,7 +98,7 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 1. Hold a duct with its flange against the underside of the shelf so the outlet points in toward the nozzle.
 2. Fix it with 2× M2.5×8 self-tapping screws up into the shelf.
 3. Repeat on the other side with the second duct. It's the same part, turned 180°.
-4. Check that neither duct touches the heater block or the sock. There should be about 5 mm of air gap to the bare block, and the lowest point of each duct should sit about 3 mm above the nozzle tip.
+4. Check that neither duct touches the heater block or the sock. There should be about 5 mm of air gap to the bare block, and the lowest point of each duct should sit about 4.5 mm above the nozzle tip.
 
 ### 9. Mount the BMG
 
@@ -117,7 +119,7 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 
 ## MGN7H carriage mount (Voron 0.2)
 
-`output/carriage_mount.stl`: print 1 in ABS/ASA, upside down (flat top face on the bed).
+`output/inserts/carriage_mount.stl`: print 1 in ABS/ASA, upside down (flat top face on the bed).
 
 The mount is an L-bracket. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange sits against the adapter's back face. It shares the two hotend-mount screws, which changes step 2 and step 4:
 

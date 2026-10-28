@@ -4,12 +4,13 @@ Parametric build123d model, same world frame as toolhead_adapter.py:
     origin = filament axis on the BMG's bottom face, +Z up, -Y front (fan side), +Y back (BMG motor side)
 Run:
     python cad/carriage_mount.py              # builds part + checks + renders
-Outputs go to ../output/.
+Outputs go to ../output/inserts/ or ../output/nuts/ (with --nuts).
 
 Layout: the MGN7H rail lies on top of the X extrusion (running along X), so the carriage faces up, toward the
 BMG motor. The mount is an L: a plate that sits on top of the carriage, under the motor, plus a flange that
 bolts against the adapter's back face. The flange takes the two hotend-mount screws (M3x35 instead of M3x30)
 in heat-set inserts, so those inserts move from the adapter's back tab into the flange.
+With --nuts, M3 nuts instead: dropped into slots that open on the top face, before the toolhead goes on.
 To take the toolhead off, remove those two screws from the front. The mount stays on the carriage.
 """
 from pathlib import Path
@@ -18,7 +19,7 @@ from build123d import Axis, Compound, Pos, export_step, export_stl
 
 sys.path.insert(0, str(Path(__file__).parent))
 import toolhead_adapter as ta
-from toolhead_adapter import box, cyl_y, cyl_z, fillet_where, near, interference
+from toolhead_adapter import box, cyl_y, cyl_z, fillet_where, near, interference, nut_pocket
 
 OUT = ta.OUT
 
@@ -37,12 +38,13 @@ FLANGE_T = 7.0               # flange against the adapter's back face (holds the
 FLANGE_SIDE_GAP = 0.2        # flange X edge to the blowers
 CAR_GAP = 2.5                # flange back face to the carriage front edge (room for the inside fillet)
 PLATE_MARGIN = 2.0           # plate past the carriage's back edge
-ARM_RELIEF = 0.9             # the blower arms stand 0.55 proud of the back tab: relief in the flange
+NUT_WALL = 2.0               # flange in front of the nut slots (takes the screw load)
 M2_CLEAR, M2_HEAD_D, M2_HEAD_RECESS = 2.4, 4.2, 2.0   # M2x5 SHCS: 3 mm plate under the head + 2 mm thread
 R_CORNER, R_INSIDE = 3.0, 2.0
 
 # ------------------------------------------------------------- derived values
 Y0 = ta.Y_BACK_OUT                                   # adapter back face = flange front face
+ARM_RELIEF = ta.ARM_HALF_Y - Y0 + 0.35               # the blower arms stand proud of the back tab: relief in the flange
 Y_FLANGE = Y0 + FLANGE_T
 TOP_Z = MOTOR_LOW_Z - MOTOR_CLEAR                    # top face of plate and flange (flat, the print bed face)
 CAR_TOP = TOP_Z - PLATE_T
@@ -65,10 +67,14 @@ def build_mount():
     for sx in (-1, 1):
         # relief for the blower arms' back faces
         cuts.append(box(*sorted((sx * (ta.ARM_X0 - 0.3), sx * (HALF_X + 1))), Y0 - 1, Y0 + ARM_RELIEF, FLANGE_LO - 1, TOP_Z + 1))
-        # hotend-mount screws: insert from the front (contact) face, clearance through to the back
         x = sx * ta.HM_SCREW_X
-        cuts += [cyl_y(ta.INSERT_D, x, ta.SCREW_Z, Y0 - 1, Y0 + ta.INSERT_L + 0.5),
-                 cyl_y(ta.M3_CLEAR, x, ta.SCREW_Z, Y0, Y_FLANGE + 1)]
+        cuts.append(cyl_y(ta.M3_CLEAR, x, ta.SCREW_Z, Y0 - 1, Y_FLANGE + 1))
+        if ta.NUTS:   # hotend-mount screws: nut dropped into a slot from the top face, corners up/down
+            ny = Y0 + NUT_WALL
+            cuts += [nut_pocket("y", x, ta.SCREW_Z, ny, ny + ta.NUT_T, "z"),
+                     box(x - ta.NUT_AF / 2, x + ta.NUT_AF / 2, ny, ny + ta.NUT_T, ta.SCREW_Z, TOP_Z + 1)]
+        else:         # hotend-mount screws: insert from the front (contact) face
+            cuts.append(cyl_y(ta.INSERT_D, x, ta.SCREW_Z, Y0 - 1, Y0 + ta.INSERT_L + 0.5))
         for sy in (-1, 1):                               # M2 into the carriage, heads recessed in the top face
             hx, hy = sx * CAR_HOLE_ALONG / 2, CAR_Y + sy * CAR_HOLE_ACROSS / 2
             cuts += [cyl_z(M2_CLEAR, hx, hy, CAR_TOP - 1, TOP_Z + 1),
@@ -87,12 +93,14 @@ def build_reference():
 
 
 def main(render_png=True):
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     mount = build_mount()
     mount.label = "carriage_mount"
-    export_step(mount, OUT / "carriage_mount.step")
-    export_stl(mount, OUT / "carriage_mount.stl", tolerance=0.01, angular_tolerance=0.1)
+    ta.export(mount, "carriage_mount")
     print(f"carriage mount: {len(mount.solids())} solid(s), volume {mount.volume:.0f} mm3, bbox {mount.bounding_box().size}")
+    tip = ta.Y_FRONT_OUT + ta.M3_HEAD_RECESS + 35 - Y0
+    print(f"mount screws M3x35: tip {tip:.2f} behind the flange's front face (flange {FLANGE_T}"
+          + (f", nut {NUT_WALL:.1f}..{NUT_WALL + 2.4:.1f})" if ta.NUTS else f", insert 0..{ta.INSERT_L:.1f})"))
     print(f"rail centre Y={CAR_Y:.2f} (filament axis Y=0), carriage top z={CAR_TOP:.2f}, rail bottom z={RAIL_LO:.2f}, "
           f"nozzle z={ta.NOZZLE_Z:.2f}  ->  nozzle {CAR_Y:.2f} in front of the rail, {CAR_TOP - ta.NOZZLE_Z:.2f} below the carriage top")
 
