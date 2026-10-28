@@ -1,3 +1,4 @@
 build123d==0.13.0
 matplotlib
 numpy
+ocp_vscode==4.2.0   # optional, for cad/show.py; match the OCP CAD Viewer extension version

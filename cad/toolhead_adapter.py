@@ -13,7 +13,8 @@ Frame used throughout (mm):
     +Z up (BMG above, nozzle below), -Y front (heatsink fan side), +Y back (BMG motor side)
 
 Vendor models (BMG, hotend mount, hotend, fan, blower) are only placed, never modified.
-Printed parts: the adapter, and a duct (x2) that screws to the shelf under each blower so it can be replaced.
+Printed parts: the adapter (with the MGN7H carriage mount from carriage_mount.py fused onto its back), and a
+duct (x2) that screws to the shelf under each blower so it can be replaced.
 """
 from pathlib import Path
 import math
@@ -31,10 +32,10 @@ VENDOR = ROOT / "third_party"   # third-party models, not in git (see README)
 # ---------------------------------------------------------------- parameters
 # Wristwatch BMG (from "Wristwatch BMG v3.step", body 0 = complete assembly)
 BMG_FILAMENT = Vector(-21.96, 103.24, 158.6)  # filament axis on bottom face, in the BMG file's coords
-BMG_HOLE_X = 17.5            # 2x M3 at +-17.5 on the filament line (screws come down through the BMG flange)
+BMG_HOLE_X = {-1: -19.5, 1: 17.5}  # 2x M3 on the filament line, not symmetric about it (37 apart, per the BMG file)
 BMG_FLANGE_T = 3.0           # BMG flange the screws pass through
 BMG_FOOT_Y = (-14.54, 7.96)  # BMG bottom face Y extent
-MOTOR_Y = 13.96              # motor sits behind this Y and dips ~0.6 mm below z=0
+MOTOR_Y = 13.96              # motor sits behind this Y, 3-4 mm above z=0 (measured), so the top face stays flat
 
 # Hotend mount (hotend_mount.STEP, flipped so its plate faces up)
 HM_AXIS_Y = 90.44            # filament axis Y in the mount's own file
@@ -63,9 +64,8 @@ PLATE_T = 6.0                # top plate thickness (mount top sits at z = -PLATE
 PLATE_HALF_X = 23.5
 FRONT_T = 4.0                # fan plate (between mount face and 3010 fan)
 FAN_PLATE_MARGIN = 2.0       # fan plate runs this far below the 3010 fan's bottom edge
-BACK_T = 5.0 if NUTS else 4.0  # back tab that takes the mount screws (thicker behind a nut pocket)
+BACK_T = 5.0                 # back tab the mount screws pass through (to the carriage mount's nuts behind it)
 BACK_TAB_H = 8.0
-MOTOR_RELIEF = (13.0, 1.5)   # (from Y, depth) step on the top-back edge under the motor
 INSERT_D, INSERT_L = 4.0, 4.0  # M3 heat-set inserts (M3x5x4 style); set to your inserts
 M3_CLEAR, M3_HEAD_D, M3_HEAD_RECESS = 3.4, 6.0, 2.0
 FILAMENT_D = 4.2             # PTFE passes BMG -> adapter -> mount
@@ -298,7 +298,9 @@ def build_duct():
     return duct.solids()[0] if len(duct.solids()) == 1 else duct
 
 
-def build_part():
+def build_part(carriage=True):
+    """The adapter, with the MGN7H carriage mount (carriage_mount.py) fused onto its back face.
+    carriage=False leaves it off (for the fit test)."""
     top = box(-PLATE_HALF_X, PLATE_HALF_X, Y_FRONT_OUT, Y_BACK_OUT, -PLATE_T, 0)
     top = top.fillet(R_CORNER, top.edges().filter_by(Axis.Z))
     # front plate and back tab run out to the blower arms' outer faces, closing the frame into a box
@@ -317,7 +319,6 @@ def build_part():
         part = part + fan_cradle()
 
     cuts = [
-        box(-50, 50, MOTOR_RELIEF[0], 50, -MOTOR_RELIEF[1], 1),                 # under the motor
         cyl_z(FILAMENT_D, 0, 0, -PLATE_T - 1, 1),
         cyl_y(FAN_BORE, 0, FAN_Z, Y_FRONT_OUT - 1, Y_FRONT_IN + 1),
         cuts_r, cuts_l,
@@ -325,24 +326,25 @@ def build_part():
     for sx in (-1, 1):
         x = sx * HM_SCREW_X
         cuts += [
-            cyl_y(M3_CLEAR, x, SCREW_Z, Y_FRONT_OUT - 1, Y_BACK_IN),            # mount screws
+            # mount screws: through the back tab, into nuts in the carriage mount's flange behind it
+            cyl_y(M3_CLEAR, x, SCREW_Z, Y_FRONT_OUT - 1, Y_BACK_OUT + 0.01),
             cyl_y(M3_HEAD_D, x, SCREW_Z, Y_FRONT_OUT - 1, Y_FRONT_OUT + M3_HEAD_RECESS),
         ]
         if NUTS:
             # BMG screws: M3x10 down into a nut slid in from the side edge, under BMG_NUT_ROOF of plate
-            bx, nz = sx * BMG_HOLE_X, -BMG_NUT_ROOF
+            bx, nz = BMG_HOLE_X[sx], -BMG_NUT_ROOF
             cuts += [cyl_z(M3_CLEAR, bx, 0, -BMG_SCREW_DEPTH - 1, 1),
                      nut_pocket("z", bx, 0, nz - NUT_T, nz, "x"),
-                     box(*sorted((bx, sx * 40)), -NUT_AF / 2, NUT_AF / 2, nz - NUT_T, nz),
-                     # mount screws: nut in a pocket in the back face, corners up/down so it prints unsupported
-                     nut_pocket("y", x, SCREW_Z, Y_BACK_OUT - NUT_T, Y_BACK_OUT + 1, "z")]
+                     box(*sorted((bx, sx * 40)), -NUT_AF / 2, NUT_AF / 2, nz - NUT_T, nz)]
         else:
-            cuts += [cyl_z(INSERT_D, sx * BMG_HOLE_X, 0, -PLATE_T, 1),          # BMG screws (insert from top)
-                     cyl_y(INSERT_D, x, SCREW_Z, Y_BACK_OUT - INSERT_L - 0.5, Y_BACK_OUT + 1)]
+            cuts.append(cyl_z(INSERT_D, BMG_HOLE_X[sx], 0, -PLATE_T, 1))         # BMG screws (insert from top)
             for sz in (-1, 1):                                                  # fan inserts
                 cuts.append(cyl_y(INSERT_D, sx * FAN_HOLE, FAN_Z + sz * FAN_HOLE, Y_FRONT_OUT - 1, Y_FRONT_IN + 0.01))
     for c in cuts:
         part = part - c
+    if carriage:
+        import carriage_mount   # imports this module, so only at call time
+        part = part + carriage_mount.build_mount()
     return part.solids()[0] if len(part.solids()) == 1 else part
 
 
@@ -459,7 +461,8 @@ def main(render_png=True):
     export(duct, "2x_duct")
     print(f"duct (print 2): volume {duct.volume:.0f} mm3, bbox {duct.bounding_box().size}")
     if NUTS:
-        export(build_fit_test(part), "fit_test", rot=None)
+        fit_test = build_fit_test(build_part(carriage=False))   # the carriage mount would cut into the blower piece
+        export(fit_test, "fit_test", rot=None)
     printed = {"adapter": part, "duct_R": duct, "duct_L": Rot(0, 0, 180) * duct}
 
     vendor = load_vendor()
@@ -485,9 +488,6 @@ def main(render_png=True):
           f"L {printed['duct_L'].distance_to(block):.2f} mm")
     print(f"BMG screws M3x{BMG_SCREW_L:.0f}: tip {BMG_SCREW_DEPTH:.1f} below the top face"
           + (f", nut {BMG_NUT_ROOF:.1f}..{BMG_NUT_ROOF + 2.4:.1f}" if NUTS else f", insert 0..{INSERT_L:.1f}"))
-    head = Y_FRONT_OUT + M3_HEAD_RECESS
-    print(f"mount screws M3x30: tip {head + 30 - Y_BACK_OUT:+.2f} past the back face"
-          + (f" (needs > {2.4 - NUT_T:+.1f} to pass through the nut)" if NUTS else ""))
 
     if render_png:
         sys.path.insert(0, str(Path(__file__).parent))
@@ -496,7 +496,7 @@ def main(render_png=True):
         render(OUT / "render_part.png", [part, ducts], "adapter(blue) + 2 ducts(orange)")
         render(OUT / "render_2x_duct.png", [duct], "duct (print 2)")
         if NUTS:
-            render(OUT / "render_fit_test.png", [build_fit_test(part)], "fit test: fan cradle, blower cradle")
+            render(OUT / "render_fit_test.png", [fit_test], "fit test: fan cradle, blower cradle")
         render(OUT / "render_assembly.png",
                [part, vendor["hotend_mount"], vendor["fan_3010"], Compound([vendor["blower_R"], vendor["blower_L"]]),
                 vendor["bmg"], ducts, vendor["hotend"]],

@@ -31,9 +31,11 @@ The STL files are already turned to these orientations and sit on the bed. Impor
 
 | Qty | Part | Where it goes |
 |---|---|---|
-| 8 | M3 heat-set insert, Ø5 × 4 mm long (for a Ø4.0 hole) | 2 top plate, 2 back tab, 4 front plate |
+| 6 | M3 heat-set insert, Ø5 × 4 mm long (for a Ø4.0 hole) | 2 top plate, 4 front plate |
+| 2 | M3 hex nut (5.5 mm across flats, 2.4 mm thick) | Carriage mount flange, for the hotend-mount screws |
 | 2 | M3×8 socket head screw | BMG to the top plate |
-| 2 | M3×30 socket head screw | Hotend mount module to the frame. M3×28 also works and ends flush with the back tab. M3×30 sticks out about 1.6 mm behind it |
+| 2 | M3×35 socket head screw | Hotend mount module to the frame, into the nuts in the carriage mount flange. The tip ends about 1.2 mm past the nut, inside the flange |
+| 4 | M2×5 socket head screw | Adapter to the MGN7H carriage. 5 mm, no longer, or they hit the rail |
 | 4 | M3×12 screw | 3010 fan to the front plate. Don't go longer than 14 mm, or the screws hit the hotend mount |
 | 4 | M2.5 self-tapping screw | Blowers to the arms, 2 each. Length = blower ear thickness + up to 3 mm (M2.5×12 for full-height 10 mm ears). Any longer and the tip hits the hotend mount |
 | 4 | M2.5×8 self-tapping screw | Ducts to the shelves, 2 each |
@@ -43,7 +45,7 @@ If your inserts aren't Ø5 × 4 mm, change `INSERT_D` / `INSERT_L` in `cad/toolh
 
 ### Tools
 
-Soldering iron with a heat-set insert tip, 2.5 mm hex key, Phillips screwdriver for the self-tapping screws, PTFE tube cutter or a sharp blade.
+Soldering iron with a heat-set insert tip, 2.5 mm and 1.5 mm hex keys, Phillips screwdriver for the self-tapping screws, PTFE tube cutter or a sharp blade.
 
 ## Steps
 
@@ -53,13 +55,12 @@ Soldering iron with a heat-set insert tip, 2.5 mm hex key, Phillips screwdriver 
 2. Test-fit the hotend mount module in the gap between the front plate and the back tab. It should slide in by hand without force (0.1 mm clearance per side). Sand or scrape the inner faces if it binds.
 3. Clear the blower and duct pilot holes with a 2.2 mm drill if they came out undersized.
 
-### 2. Install the heat-set inserts (8×)
+### 2. Install the heat-set inserts (6×)
 
 Press each insert in square to the face until it sits flush. Let it cool before moving on.
 
 1. **Top plate, 2×:** from the top face, in the two holes either side of the filament hole.
-2. **Back tab, 2×:** from the back face, in line with the two counterbored holes in the front plate.
-3. **Front plate, 4×:** from the front face, at the corners of the Ø28 fan opening.
+2. **Front plate, 4×:** from the front face, at the corners of the Ø28 fan opening.
 
 ### 3. Attach the hotend to the mount module
 
@@ -67,13 +68,14 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 2. Fix the heatsink with its 4 screws.
 3. Rotate the hotend so the heater's 10 mm side (the one with the ears) runs left–right, toward the blowers. The ducts are sized for this. Turning it 90° also works and adds 0.9 mm of duct clearance.
 4. Fit the silicone sock.
-5. Route the heater and thermistor wires up along the back of the mount.
+5. Route the heater and thermistor wires out to the side. The carriage mount's flange covers the back of the mount module.
 
 ### 4. Fit the mount module into the frame
 
-1. With the ducts still off, slide the mount module up into the frame from below, between the front plate and the back tab, plate side up, until it stops against the underside of the top plate.
-2. Push 2× M3×30 screws in from the front, through the counterbored holes, through the mount's horizontal holes, and into the back tab inserts.
-3. Tighten them evenly. Stop once they're snug, or the screws will bow the back tab.
+1. Drop an M3 nut into each of the two slots in the top face of the carriage mount, just behind the back tab. They fall to the bottom of the slot, in line with the screw holes.
+2. With the ducts still off, slide the mount module up into the frame from below, between the front plate and the back tab, plate side up, until it stops against the underside of the top plate.
+3. Push 2× M3×35 screws in from the front, through the counterbored holes, the mount's horizontal holes and the back tab, into the nuts.
+4. Tighten them evenly. Stop once they're snug, or the screws will bow the back tab.
 
 ### 5. Fit the PTFE tube
 
@@ -102,7 +104,9 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 
 ### 9. Mount the BMG
 
-1. Set the BMG on the top plate with its motor toward the back, over the stepped-down relief at the back edge.
+If the toolhead goes on a Voron 0.2, bolt it to the carriage first (see [MGN7H carriage](#mgn7h-carriage-voron-02)). The motor covers those screws.
+
+1. Set the BMG on the top plate with its motor toward the back, over the carriage mount.
 2. Make sure the PTFE tube enters its tube seat.
 3. Fix it with 2× M3×8 screws down through the BMG flange into the top plate inserts.
 
@@ -117,23 +121,14 @@ Press each insert in square to the face until it sits flush. Let it cool before 
    - Filament feeds through smoothly.
 4. Re-tighten the nozzle hot as usual for the TZ-V6.
 
-## MGN7H carriage mount (Voron 0.2)
+## MGN7H carriage (Voron 0.2)
 
-`output/inserts/carriage_mount.stl`: print 1 in ABS/ASA, upside down (flat top face on the bed).
+The carriage mount is part of the adapter. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange is fused to the back tab. The two hotend-mount screws end in nuts in that flange.
 
-The mount is an L-bracket. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange sits against the adapter's back face. It shares the two hotend-mount screws, which changes step 2 and step 4:
+1. Before mounting the BMG, bolt the adapter to the carriage with 4× M2×5 socket head screws, down through the counterbored holes in the plate. Use 5 mm, no longer, or the screws hit the rail.
+2. Then mount the BMG. Its motor sits over the M2 screws and the nut slots.
 
-- **Step 2:** skip the 2 back tab inserts. Put those 2 inserts in the flange instead, pressed in from its front face (the face that touches the adapter).
-- **Step 4:** use 2× M3×35 instead of M3×30. They go through the front plate, the mount module and the back tab, then into the flange inserts.
-
-To fit it:
-
-1. Bolt the mount to the carriage with 4× M2×5 socket head screws. Use 5 mm, no longer, or the screws hit the rail.
-2. Hold the toolhead against the flange and drive the 2× M3×35 in from the front.
-
-To take the toolhead off, remove those 2 screws. The mount stays on the carriage.
-
-The flange covers the back of the mount module, so route the hotend wires out to the side.
+To take the toolhead off the carriage, take the BMG off first (2 screws), then remove the 4 M2 screws.
 
 ## Replacing a duct
 

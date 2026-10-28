@@ -13,14 +13,15 @@ There are two versions of the printed parts:
 
 ## What's in the part
 
-- **Top plate:** the BMG bolts on with 2× M3×8 screws, going down through its flange into M3 heat-set inserts at ±17.5 mm. The PTFE tube passes straight through on the filament axis.
-- **Hotend mount module:** slides up between a front plate and a back tab. It's held by 2× M3×30 screws through its horizontal holes into inserts in the back tab. The hotend is used like on the Mini Stealthburner: without the kit's top part, with the heatsink screwed straight to the mount.
+- **Top plate:** the BMG bolts on with 2× M3×8 screws, going down through its flange into M3 heat-set inserts, 37 mm apart: 17.5 mm from the filament on one side and 19.5 mm on the other, matching the BMG. The PTFE tube passes straight through on the filament axis.
+- **Hotend mount module:** slides up between a front plate and a back tab. It's held by 2× M3×35 screws through its horizontal holes and the back tab, into M3 nuts in the carriage mount behind it. The hotend is used like on the Mini Stealthburner: without the kit's top part, with the heatsink screwed straight to the mount.
 - **Frame:** the front plate and back tab run out to the blower arms, so the frame is a closed box.
+- **Carriage mount:** part of the adapter, behind the back tab. Its plate bolts on top of the Voron 0.2's MGN7H X carriage with 4× M2×5 screws, under the BMG motor, so the BMG comes off to take the toolhead off the carriage.
 - **3010 fan:** mounts on the front plate over the Ø28 opening with 4× M3 inserts. Fit it so it blows into the heatsink.
 - **2× 3010 blowers:** one on each side, held by M2.5 self-tapping screws through their diagonal ears. Each one sits on a shelf with an opening under its outlet.
 - **2× ducts (separate parts):** each screws up into the underside of a shelf with 2× M2.5×8 self-tapping screws. Both ducts are the same part. They're the parts that run hottest, so they're made to be swapped, and you can print them in a more heat-resistant material than the frame.
 
-Print the adapter upside down (top plate on the bed). Print the ducts (2 copies of `2x_duct.stl`) flange-down (the flange's flat top face on the bed). Use ABS/ASA for both. The STL files are already turned to these orientations. The STEP files stay in the assembly frame.
+Print the adapter upside down (top plate on the bed). The whole top face, carriage mount included, is flat at the same height. Print the ducts (2 copies of `2x_duct.stl`) flange-down (the flange's flat top face on the bed). Use ABS/ASA for both. The STL files are already turned to these orientations. The STEP files stay in the assembly frame.
 
 ## Files
 
@@ -28,12 +29,13 @@ Print the adapter upside down (top plate on the bed). Print the ducts (2 copies 
 |---|---|
 | `ASSEMBLY.md` | Bill of materials and assembly steps |
 | `ASSEMBLY_NUTS.md` | The same, for the captive-nut version |
-| `output/inserts/`, `output/nuts/` | One folder per version, each with the 4 printed parts: `toolhead_adapter.stl`, `carriage_mount.stl`, and `2x_duct.stl` (print 2). STEP files alongside |
+| `output/inserts/`, `output/nuts/` | One folder per version, each with the printed parts: `toolhead_adapter.stl` (carriage mount included) and `2x_duct.stl` (print 2). STEP files alongside |
 | `output/nuts/fit_test.stl` | Two small pieces for checking the fan and blower snap fits before printing the adapter |
-| `output/*/render_*.png` | Renders of the adapter, the duct, the carriage mount and the full assembly |
-| `cad/carriage_mount.py` | Parametric carriage mount, in the same frame as the adapter |
+| `output/*/render_*.png` | Renders of the adapter, the duct, the full assembly, and the assembly on the carriage |
+| `cad/carriage_mount.py` | Parametric carriage mount, fused onto the adapter by `toolhead_adapter.py`. Run it to check the fit on the carriage |
 | `cad/toolhead_adapter.py` | Parametric build123d model; every dimension is a named constant at the top |
 | `third_party/` | Third-party models and reference material, not in git (see Rebuilding) |
+| `cad/show.py` | Shows the full assembly in the OCP CAD Viewer (VS Code) |
 | `cad/render.py`, `cad/inspect_step.py`, `cad/list_step_*.py` | Helpers to render and inspect STEP files |
 
 ## Rebuilding
@@ -63,6 +65,14 @@ python cad/carriage_mount.py [--nuts]
 ```
 
 This rebuilds `output/inserts/` or `output/nuts/`, including `toolhead_assembly.step`. It prints interference checks between every pair of parts, the gap between each duct and the heater block, and where each screw's tip ends up.
+
+To look at the model in VS Code, install the OCP CAD Viewer extension, open its viewer (OCP icon in the sidebar), then run:
+
+```
+python cad/show.py [--nuts]
+```
+
+This builds the adapter (with its carriage mount), ducts, the carriage, rail and extrusion, and all third-party parts and sends them to the viewer as separate, coloured objects. Nothing is exported.
 
 ## Check before printing
 

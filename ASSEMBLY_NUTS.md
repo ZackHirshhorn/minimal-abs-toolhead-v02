@@ -34,17 +34,18 @@ The STL files are already turned to these orientations and sit on the bed. Impor
 
 | Qty | Part | Where it goes |
 |---|---|---|
-| 8 | M3 hex nut (5.5 mm across flats, 2.4 mm thick) | 2 top plate (BMG), 2 back tab, 4 duct lugs |
+| 8 | M3 hex nut (5.5 mm across flats, 2.4 mm thick) | 2 top plate (BMG), 2 carriage mount flange, 4 duct lugs |
 | 2 | M3×10 socket head screw | BMG to the top plate |
-| 2 | M3×30 socket head screw | Hotend mount module to the frame. The tip ends about 0.6 mm past the back face |
+| 2 | M3×35 socket head screw | Hotend mount module to the frame, into the nuts in the carriage mount flange. The tip ends about 1.2 mm past the nut, inside the flange |
 | 4 | M3×10 socket head screw | Ducts to the shelves, 2 each |
+| 4 | M2×5 socket head screw | Adapter to the MGN7H carriage. 5 mm, no longer, or they hit the rail |
 | 4 | M2.5×6 hotend screws | Heatsink to the mount module. Use the ones from the hotend kit, as on the Mini Stealthburner |
 
 The fan and blowers need no screws.
 
 ### Tools
 
-2.5 mm hex key, a small flat screwdriver or a pick for pushing nuts into their slots, PTFE tube cutter or a sharp blade.
+2.5 mm and 1.5 mm hex keys, a small flat screwdriver or a pick for pushing nuts into their slots, PTFE tube cutter or a sharp blade.
 
 ## Steps
 
@@ -66,7 +67,7 @@ If a fit is too tight or too loose, change `CRADLE_FIT` (0.15 mm per side) or `N
 ### 3. Fit the nuts in the frame (4×)
 
 1. **Top plate, 2×:** each BMG hole has a slot that opens on the left or right side face, just under the top face. Slide a nut in flat and push it to the end of the slot. It stops centred under the hole. Check with a screw from above.
-2. **Back tab, 2×:** press a nut into each hex pocket in the back face, in line with the counterbored holes in the front plate.
+2. **Carriage mount, 2×:** drop a nut into each of the two slots in the carriage mount's top face, just behind the back tab. They fall to the bottom of the slot, in line with the counterbored holes in the front plate.
 
 ### 4. Attach the hotend to the mount module
 
@@ -74,12 +75,12 @@ If a fit is too tight or too loose, change `CRADLE_FIT` (0.15 mm per side) or `N
 2. Fix the heatsink with its 4 screws.
 3. Rotate the hotend so the heater's 10 mm side (the one with the ears) runs left–right, toward the blowers. The ducts are sized for this. Turning it 90° also works and adds 0.9 mm of duct clearance.
 4. Fit the silicone sock.
-5. Route the heater and thermistor wires up along the back of the mount.
+5. Route the heater and thermistor wires out to the side. The carriage mount's flange covers the back of the mount module.
 
 ### 5. Fit the mount module into the frame
 
 1. Slide the mount module up into the frame from below, between the front plate and the back tab, plate side up, until it stops against the underside of the top plate.
-2. Push 2× M3×30 screws in from the front, through the counterbored holes and the mount's horizontal holes, into the back tab nuts.
+2. Push 2× M3×35 screws in from the front, through the counterbored holes, the mount's horizontal holes and the back tab, into the carriage mount nuts.
 3. Tighten them evenly. Stop once they're snug, or the screws will bow the back tab.
 
 ### 6. Fit the PTFE tube
@@ -111,7 +112,9 @@ If a fit is too tight or too loose, change `CRADLE_FIT` (0.15 mm per side) or `N
 
 ### 10. Mount the BMG
 
-1. Set the BMG on the top plate with its motor toward the back, over the stepped-down relief at the back edge.
+If the toolhead goes on a Voron 0.2, bolt it to the carriage first (see [MGN7H carriage](#mgn7h-carriage-voron-02)). The motor covers those screws.
+
+1. Set the BMG on the top plate with its motor toward the back, over the carriage mount.
 2. Make sure the PTFE tube enters its tube seat.
 3. Fix it with 2× M3×10 screws down through the BMG flange into the top plate nuts.
 
@@ -126,24 +129,14 @@ If a fit is too tight or too loose, change `CRADLE_FIT` (0.15 mm per side) or `N
    - Filament feeds through smoothly.
 4. Re-tighten the nozzle hot as usual for the TZ-V6.
 
-## MGN7H carriage mount (Voron 0.2)
+## MGN7H carriage (Voron 0.2)
 
-`output/nuts/carriage_mount.stl`: print 1 in ABS/ASA, upside down (flat top face on the bed).
+The carriage mount is part of the adapter. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange is fused to the back tab. The two hotend-mount screws end in nuts in that flange.
 
-The mount is an L-bracket. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange sits against the adapter's back face. It shares the two hotend-mount screws, which changes steps 3 and 5:
+1. Before mounting the BMG, bolt the adapter to the carriage with 4× M2×5 socket head screws, down through the counterbored holes in the plate. Use 5 mm, no longer, or the screws hit the rail.
+2. Then mount the BMG. Its motor sits over the M2 screws and the nut slots.
 
-- **Step 3:** skip the 2 back tab nuts. Use 2 M3 nuts in the flange instead.
-- **Step 5:** use 2× M3×35 instead of M3×30. They go through the front plate, the mount module and the back tab, then into the flange nuts.
-
-To fit it:
-
-1. Bolt the mount to the carriage with 4× M2×5 socket head screws. Use 5 mm, no longer, or the screws hit the rail.
-2. Drop an M3 nut into each of the two slots in the top face of the flange. They fall to the bottom of the slot, in line with the screw holes. Once the toolhead is on, the BMG motor sits over the slots.
-3. Hold the toolhead against the flange and drive the 2× M3×35 in from the front.
-
-To take the toolhead off, remove those 2 screws. The mount stays on the carriage, and the nuts stay in their slots.
-
-The flange covers the back of the mount module, so route the hotend wires out to the side.
+To take the toolhead off the carriage, take the BMG off first (2 screws), then remove the 4 M2 screws.
 
 ## Replacing a duct
 
