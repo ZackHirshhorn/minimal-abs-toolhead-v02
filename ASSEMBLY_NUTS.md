@@ -15,6 +15,7 @@ Directions used below: **front** is the 3010 fan side, **back** is the BMG motor
 | 1 | Fit test (print this first) | `output/nuts/fit_test.stl` | Same as the adapter | Blower piece: top face on the bed. Fan piece: plate face on the bed |
 | 1 | Adapter | `output/nuts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed. Supports are built in: turn slicer supports off |
 | 2 | Duct (both sides use the same part) | `output/nuts/2x_duct.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
+| 1 | Toolboard mount (optional, for an EBB36) | `output/nuts/toolboard_mount.stl` | ABS/ASA | Front face (the flat side without bosses) on the bed. No supports |
 
 The STL files are already turned to these orientations and sit on the bed. Import them as they are.
 
@@ -39,6 +40,11 @@ The STL files are already turned to these orientations and sit on the bed. Impor
 | 2 | M3×35 socket head screw | Hotend mount module to the frame, into the nuts in the carriage mount flange. The tip ends about 1.2 mm past the nut, inside the flange |
 | 4 | M3×10 socket head screw | Ducts to the shelves, 2 each |
 | 4 | M2×5 socket head screw | Adapter to the MGN7H carriage. 5 mm, no longer, or they hit the rail |
+| 2 | M3×35 and M3×30 socket head screw, 1 each (toolboard) | Replace the 2 motor screws, so their tips stick out of the motor's back for the standoffs |
+| 2 | M3×10 female-female standoff, 5 mm across flats (toolboard) | On the motor screw tips, behind the motor |
+| 2 | M3×8 socket head screw (toolboard) | Toolboard mount to the standoffs |
+| 2 | M3 hex nut (toolboard) | Toolboard mount's front face, for the board screws |
+| 2 | M3×16 socket head screw (toolboard) | EBB36 to the mount, through the bosses into the nuts. The tip ends 3.4 mm past the mount, 10 mm short of the motor |
 | 4 | M2.5×6 hotend screws | Heatsink to the mount module. Use the ones from the hotend kit, as on the Mini Stealthburner |
 
 The fan and blowers need no screws.
@@ -137,6 +143,16 @@ The carriage mount is part of the adapter. Its plate sits on top of the MGN7H ca
 2. Then mount the BMG. Its motor sits over the M2 screws and the nut slots.
 
 To take the toolhead off the carriage, take the BMG off first (2 screws), then remove the 4 M2 screws.
+
+## EBB36 toolboard (optional)
+
+The mount holds a BTT EBB36 CAN on the back of the BMG motor, on two M3 female-female standoffs threaded onto the motor screws. The motor screws sit on a diagonal, so the mount turns the board level and centres it on the motor. That keeps its bottom edge about 4 mm above the adapter's top face and clear of the carriage mount under the motor.
+
+1. Take out the BMG's 2 motor screws, one at a time so the motor stays put. Put in longer ones the same way, heads in the BMG: M3×35 in the upper hole, M3×30 in the lower one. Their tips should stick out about 4.3 mm past the motor's back face. If yours stick out more than 5 mm, use a shorter screw, or the mount screw won't have room in the standoff.
+2. Thread an M3×10 female-female standoff onto each tip until it seats on the motor.
+3. Drop an M3 nut into each of the two hex pockets in the mount's front face (the side without bosses). The board screws hold them in.
+4. Fix the mount to the standoffs with 2× M3×8 through the counterbored holes, heads on the board side.
+5. Screw the EBB36 to the two bosses. It goes either way round, so turn its connectors where your wiring needs them.
 
 ## Replacing a duct
 

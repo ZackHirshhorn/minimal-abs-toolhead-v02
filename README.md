@@ -19,6 +19,7 @@ There are two versions of the printed parts:
 - **Carriage mount:** part of the adapter, behind the back tab. Its plate bolts on top of the Voron 0.2's MGN7H X carriage with 4× M2×5 screws, under the BMG motor, so the BMG comes off to take the toolhead off the carriage.
 - **3010 fan:** mounts on the front plate over the Ø28 opening with 4× M3 inserts. Fit it so it blows into the heatsink.
 - **2× 3010 blowers:** one on each side, held by M2.5 self-tapping screws through their diagonal ears. Each one sits on a shelf with an opening under its outlet.
+- **Toolboard mount (separate part, optional):** holds a BTT EBB36 CAN on the back of the BMG motor, on two M3 female-female standoffs on the motor screws, as usual on the Voron 0.2. The motor screws sit on a diagonal, so the mount turns the board level and centres it on the motor, which keeps its bottom edge clear of the carriage mount.
 - **2× ducts (separate parts):** each screws up into the underside of a shelf with 2× M2.5×8 self-tapping screws. Both ducts are the same part. They're the parts that run hottest, so they're made to be swapped, and you can print them in a more heat-resistant material than the frame.
 
 Print the adapter upside down (top plate on the bed). The whole top face, carriage mount included, is flat at the same height. Print the ducts (2 copies of `2x_duct.stl`) flange-down (the flange's flat top face on the bed). Use ABS/ASA for both. The STL files are already turned to these orientations. The STEP files stay in the assembly frame.
@@ -31,9 +32,10 @@ The adapter STL has its supports built in, so print it with slicer supports off.
 |---|---|
 | `ASSEMBLY.md` | Bill of materials and assembly steps |
 | `ASSEMBLY_NUTS.md` | The same, for the captive-nut version |
-| `output/inserts/`, `output/nuts/` | One folder per version, each with the printed parts: `toolhead_adapter.stl` (carriage mount included) and `2x_duct.stl` (print 2). STEP files alongside |
+| `output/inserts/`, `output/nuts/` | One folder per version, each with the printed parts: `toolhead_adapter.stl` (carriage mount included), `2x_duct.stl` (print 2) and `toolboard_mount.stl`. STEP files alongside |
 | `output/nuts/fit_test.stl` | Two small pieces for checking the fan and blower snap fits before printing the adapter |
 | `output/*/render_*.png` | Renders of the adapter, the adapter as printed with its built-in supports, the duct, the full assembly, and the assembly on the carriage |
+| `cad/toolboard_mount.py` | Parametric EBB36 toolboard mount. Run it to export it and check the fit behind the motor |
 | `cad/carriage_mount.py` | Parametric carriage mount, fused onto the adapter by `toolhead_adapter.py`. Run it to check the fit on the carriage |
 | `cad/toolhead_adapter.py` | Parametric build123d model; every dimension is a named constant at the top |
 | `third_party/` | Third-party models and reference material, not in git (see Rebuilding) |
@@ -64,6 +66,7 @@ pip install -r cad/requirements.txt
 python cad/toolhead_adapter.py            # heat-set insert version
 python cad/toolhead_adapter.py --nuts     # captive-nut version
 python cad/carriage_mount.py [--nuts]
+python cad/toolboard_mount.py [--nuts]
 ```
 
 This rebuilds `output/inserts/` or `output/nuts/`, including `toolhead_assembly.step`. It prints interference checks between every pair of parts, the gap between each duct and the heater block, and where each screw's tip ends up.

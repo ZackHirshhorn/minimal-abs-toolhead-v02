@@ -13,20 +13,23 @@ from build123d import Rot
 from ocp_vscode import show
 import toolhead_adapter as ta
 import carriage_mount as cm
+import toolboard_mount as tm
 
 PARTS = {  # name: colour, matching the render captions
     "adapter": "steelblue", "duct_R": "teal", "duct_L": "teal",
     "hotend_mount": "orange", "fan_3010": "red", "blower_R": "green", "blower_L": "green",
     "bmg": "mediumpurple", "hotend": "saddlebrown",
+    "toolboard_mount": "steelblue", "motor": "dimgray", "standoffs": "gold", "ebb36": "darkgreen",
     "mgn7h_carriage": "lightseagreen", "mgn7_rail": "silver", "x_extrusion": "dimgray",
 }
 
 
 def main():
     duct = ta.build_duct()
-    objs = {"adapter": ta.build_part(), "duct_R": duct, "duct_L": Rot(0, 0, 180) * duct}
+    objs = {"adapter": ta.build_part(), "duct_R": duct, "duct_L": Rot(0, 0, 180) * duct, "toolboard_mount": tm.build_mount()}
     objs.update(ta.load_vendor())
     objs.update(cm.build_reference())
+    objs.update(tm.build_reference())
     names = list(objs)
     show(*objs.values(), names=names, colors=[PARTS[n] for n in names],
          alphas=[0.4 if n in ("mgn7_rail", "x_extrusion") else 1.0 for n in names])
