@@ -13,7 +13,7 @@ Directions used below: **front** is the 3010 fan side, **back** is the BMG motor
 | Qty | Part | File | Material | Orientation |
 |---|---|---|---|---|
 | 1 | Fit test (print this first) | `output/nuts/fit_test.stl` | Same as the adapter | Blower piece: top face on the bed. Fan piece: plate face on the bed |
-| 1 | Adapter | `output/nuts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed |
+| 1 | Adapter | `output/nuts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed. Supports are built in: turn slicer supports off |
 | 2 | Duct (both sides use the same part) | `output/nuts/2x_duct.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
 
 The STL files are already turned to these orientations and sit on the bed. Import them as they are.
@@ -61,7 +61,7 @@ If a fit is too tight or too loose, change `CRADLE_FIT` (0.15 mm per side) or `N
 
 ### 2. Prepare the adapter
 
-1. Remove any supports, mostly from under the shelves and arms.
+1. Remove the built-in supports: the combs in each blower bay and under each duct lug, the walls under the fan cradle's side walls and the blower wire notches, and the ribs in the fan opening. Pull the blower bay combs out sideways and break the rest off at their tabs with pliers. Then clean the tab marks off the faces they stood on, especially the top of each blower bay, which the blower sits against. There are no supports in the nut pockets or slots.
 2. Test-fit the hotend mount module in the gap between the front plate and the back tab. It should slide in by hand without force (0.1 mm clearance per side). Sand or scrape the inner faces if it binds.
 
 ### 3. Fit the nuts in the frame (4×)

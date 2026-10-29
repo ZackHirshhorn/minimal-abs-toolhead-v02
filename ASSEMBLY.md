@@ -10,7 +10,7 @@ Directions used below: **front** is the 3010 fan side, **back** is the BMG motor
 
 | Qty | Part | File | Material | Orientation |
 |---|---|---|---|---|
-| 1 | Adapter | `output/inserts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed |
+| 1 | Adapter | `output/inserts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed. Supports are built in: turn slicer supports off |
 | 2 | Duct (both sides use the same part) | `output/inserts/2x_duct.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
 
 The STL files are already turned to these orientations and sit on the bed. Import them as they are.
@@ -51,7 +51,7 @@ Soldering iron with a heat-set insert tip, 2.5 mm and 1.5 mm hex keys, Phillips 
 
 ### 1. Prepare the printed parts
 
-1. Remove any supports, mostly from under the shelves and arms.
+1. Remove the built-in supports: the combs under each shelf and duct lug, and the ribs in the fan opening. Break them off at their tabs with pliers. Then clean the tab marks off the faces they stood on.
 2. Test-fit the hotend mount module in the gap between the front plate and the back tab. It should slide in by hand without force (0.1 mm clearance per side). Sand or scrape the inner faces if it binds.
 3. Clear the blower and duct pilot holes with a 2.2 mm drill if they came out undersized.
 

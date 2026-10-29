@@ -115,6 +115,16 @@ R_SMALL = 1.0                # shelf inner corners, lugs, duct flange-to-tube ju
 R_ARM_ROOT = 3.0             # concave, top plate underside to arm outer face (blower top sits 5 mm lower)
 R_WINDOW = 2.0               # arm window corners
 
+# Built-in supports, in the adapter's STL only (the STEP and the assembly stay without them): thin walls under
+# the overhangs that can't bridge. They stop SUP_GAP_Z short of the face they hold up and SUP_GAP_XY clear of
+# the part's sides. Where one stands on the part rather than the bed, only short tabs touch it, so it snaps off.
+# None go into a nut pocket or slot (nut_keepouts).
+SUP_WALL = 0.8               # wall thickness: 2 lines of a 0.4 mm nozzle
+SUP_PITCH = 2.5              # max wall spacing
+SUP_GAP_Z = 0.2              # air gap under the face held up (one 0.2 mm layer)
+SUP_GAP_XY = 0.5             # ...and to the part's sides
+SUP_TAB = (1.0, 3.0, 0.4)    # standing on the part: tab length, tab pitch, notch height between the tabs
+
 # ------------------------------------------------------------- derived values
 MOUNT_TOP = -PLATE_T
 BMG_SCREW_L = 10.0 if NUTS else 8.0
@@ -364,12 +374,97 @@ def fan_cradle():
     return cradle
 
 
+def union(shapes):
+    out = shapes[0]
+    for s in shapes[1:]:
+        out = out + s
+    return out
+
+
+def spaced(lo, hi):
+    """Wall centres from lo to hi (walls flush with both ends), at most SUP_PITCH apart."""
+    lo, hi = lo + SUP_WALL / 2, hi - SUP_WALL / 2
+    n = max(1, math.ceil((hi - lo) / SUP_PITCH))
+    return [lo + (hi - lo) * i / n for i in range(n + 1)]
+
+
+def nut_keepouts():
+    """Every captive-nut pocket and slot in the adapter, grown by SUP_GAP_XY and run out through the side it's
+    loaded from (the duct lugs' out to the bed), so no support ends up in one."""
+    import carriage_mount as cm
+    g, r = SUP_GAP_XY, NUT_AF / math.sqrt(3) + SUP_GAP_XY   # r: nut corner radius, grown
+    outs = []
+    for sx in (-1, 1):
+        x = sx * HM_SCREW_X                                    # carriage mount: slots open on the top face
+        ny = cm.Y0 + cm.NUT_WALL
+        outs.append(box(x - NUT_AF / 2 - g, x + NUT_AF / 2 + g, ny - g, ny + NUT_T + g, SCREW_Z - r, 1))
+        if NUTS:
+            bx, nz = BMG_HOLE_X[sx], -BMG_NUT_ROOF             # BMG: slots open on the side faces
+            outs.append(box(*sorted((bx - sx * r, sx * 40)), -NUT_AF / 2 - g, NUT_AF / 2 + g, nz - NUT_T - g, nz + g))
+            lug_top = OUT_LO + LUG_H                           # duct lugs: pockets open on the lug tops
+            outs += [cyl_z(2 * r, sx * DUCT_SCREW_X, sy * DUCT_SCREW_Y, lug_top - NUT_T - g, 1) for sy in (-1, 1)]
+    return outs
+
+
+def build_supports(part):
+    """Built-in supports for part (the adapter, with or without its carriage mount), in the assembly frame.
+    Each support is a column under an overhang, cut down to a comb of walls; the part, grown by the gaps, is then
+    taken out of it, leaving each comb between the face it holds up and whatever is under it in print: the bed,
+    or the part, which only its tabs touch."""
+    cols, tabs = [], []
+    t_len, t_pitch, t_h = SUP_TAB
+
+    def comb(region, ys=(), xs=()):
+        """region cut to walls along X (at each y in ys) and along Y (at each x in xs), plus their tabs."""
+        bb = region.bounding_box()
+        z0, z1 = bb.min.Z - 1, bb.max.Z + 1
+        x0, x1, y0, y1 = bb.min.X - 1, bb.max.X + 1, bb.min.Y - 1, bb.max.Y + 1
+        walls = ([box(x0, x1, y - SUP_WALL / 2, y + SUP_WALL / 2, z0, z1) for y in ys]
+                 + [box(x - SUP_WALL / 2, x + SUP_WALL / 2, y0, y1, z0, z1) for x in xs])
+        cols.append(region & union(walls))
+        w = SUP_WALL / 2 + 0.1
+        tabs.extend(box(x - t_len / 2, x + t_len / 2, y - w, y + w, z0, z1)
+                    for y in ys for x in [bb.min.X + t_len / 2 + i * t_pitch for i in range(int(bb.size.X / t_pitch) + 1)])
+        tabs.extend(box(x - w, x + w, y - t_len / 2, y + t_len / 2, z0, z1)
+                    for x in xs for y in [bb.min.Y + t_len / 2 + i * t_pitch for i in range(int(bb.size.Y / t_pitch) + 1)])
+
+    for s in (1, -1):   # +X side, and the -X side: the same turned 180 deg about Z
+        rot = Rot(0, 0, 90 - 90 * s)
+        # shelf over the blower bay, and the lug tops, minus the air passage (and the ledge beside it, on the arm)
+        region = shelf_box(OUT_LO, 0) - box(ARM_X0 - 1, OUT_X[1], *OUT_Y, OUT_LO - 1, 1)
+        comb(rot * region, ys=[s * y for y in spaced(-SHELF_HALF_Y, SHELF_HALF_Y)], xs=[s * (OUT_X[1] + SHELF_X[1]) / 2])
+        if NUTS:   # the cradle wall left under the blower's wire notch
+            x2 = BL_X0 + 10.0 + CRADLE_FIT + SNAP_LIP[1]
+            region = box(BL_X0, x2, 15.0 + CRADLE_FIT, ARM_HALF_Y, *(BLOWER_Z + z for z in BL_WIRE_X))
+            comb(rot * region, ys=[s * (15.0 + CRADLE_FIT + CRADLE_WALL / 2)])
+    if NUTS:       # tops of the fan cradle's side walls
+        x_in = 15.0 + CRADLE_FIT
+        for sx in (-1, 1):
+            region = box(*sorted((sx * (x_in - SNAP_LIP[0]), sx * (x_in + CRADLE_WALL))),
+                         FAN_FACE_Y - SNAP_LIP[1], Y_FRONT_OUT, FAN_Z, 0)
+            comb(region, xs=[sx * (x_in + CRADLE_WALL / 2)])
+    # fan bore: the part of its top (in print) steeper than 45 deg
+    r45 = FAN_BORE / 2 * math.sqrt(0.5)
+    region = cyl_y(FAN_BORE, 0, FAN_Z, Y_FRONT_OUT, Y_FRONT_IN) & box(-r45, r45, Y_FRONT_OUT, Y_FRONT_IN, FAN_Z - 20, FAN_Z + 20)
+    comb(region, xs=spaced(-r45, r45))
+
+    sup = union(cols)
+    for d in [(0, 0, 0), (0, 0, SUP_GAP_Z), (SUP_GAP_XY, 0, 0), (-SUP_GAP_XY, 0, 0), (0, SUP_GAP_XY, 0), (0, -SUP_GAP_XY, 0)]:
+        sup = sup - Pos(*d) * part
+    # standing on the part: notch the bottom (in print) of each wall between its tabs
+    sup = sup - ((sup & (Pos(0, 0, -t_h) * part)) - union(tabs))
+    sup = sup - union(nut_keepouts())
+    keep = [s for s in sup.solids() if s.bounding_box().size.Z > 1.0 and s.volume > 0.5]   # drop slivers in gaps
+    return Compound(keep)
+
+
 def build_fit_test(part):
     """Two small pieces cut from the adapter to check the snap fits before printing it all, laid out for printing:
     the fan cradle on a 2 mm slice of the front plate (plate face down), and the right blower's cradle with its
-    shelf, lugs and the BMG nut slot (top face down, as in the adapter)."""
+    shelf, lugs and the BMG nut slot (top face down, as in the adapter, with its built-in supports)."""
     fan = part & box(-19, 19, FAN_FACE_Y - 5, Y_FRONT_OUT + 2.0, FAN_Z - 18, FAN_Z + 18)
-    blower = part & box(ARM_X0, 40, -SHELF_HALF_Y - 1, SHELF_HALF_Y + 1, SHELF_LO - 1, 1)
+    cut = box(ARM_X0, 40, -SHELF_HALF_Y - 1, SHELF_HALF_Y + 1, SHELF_LO - 1, 1)
+    blower = Compound([part & cut] + [s for s in (build_supports(part) & cut).solids() if s.volume > 0.5])
     fan, blower = on_bed(fan, Rot(-90, 0, 0)), on_bed(blower, PRINT_ROT)   # Rot(-90, 0, 0): +Y face down
     gap = 4.0
     return Compound([Pos(-fan.bounding_box().size.X / 2 - gap / 2, 0, 0) * fan,
@@ -443,10 +538,12 @@ def on_bed(shape, rot):
     return Pos(-(bb.min.X + bb.max.X) / 2, -(bb.min.Y + bb.max.Y) / 2, -bb.min.Z) * shape
 
 
-def export(shape, name, rot=PRINT_ROT):
-    """STEP in the assembly frame, STL turned to its print orientation (rot=None: already laid out)."""
+def export(shape, name, rot=PRINT_ROT, supports=None):
+    """STEP in the assembly frame, STL turned to its print orientation (rot=None: already laid out).
+    supports go in the STL only."""
     export_step(shape, OUT / f"{name}.step")
-    stl = shape if rot is None else on_bed(shape, rot)
+    stl = shape if supports is None else Compound([shape, supports])
+    stl = stl if rot is None else on_bed(stl, rot)
     export_stl(stl, OUT / f"{name}.stl", tolerance=0.01, angular_tolerance=0.1)
 
 
@@ -454,8 +551,12 @@ def main(render_png=True):
     OUT.mkdir(parents=True, exist_ok=True)
     part = build_part()
     part.label = "toolhead_adapter"
-    export(part, "toolhead_adapter")
+    supports = build_supports(part)
+    export(part, "toolhead_adapter", supports=supports)
     print(f"part: {len(part.solids())} solid(s), volume {part.volume:.0f} mm3, bbox {part.bounding_box().size}")
+    print(f"built-in supports: {len(supports.solids())} solid(s), volume {supports.volume:.0f} mm3; "
+          f"overlap with the part {interference(part, supports)}, with the nut pockets and slots "
+          f"{interference(supports, Compound(nut_keepouts()))}")
     duct = build_duct()
     duct.label = "duct"
     export(duct, "2x_duct")
@@ -495,6 +596,8 @@ def main(render_png=True):
         ducts = Compound([printed["duct_R"], printed["duct_L"]])
         render(OUT / "render_part.png", [part, ducts], "adapter(blue) + 2 ducts(orange)")
         render(OUT / "render_2x_duct.png", [duct], "duct (print 2)")
+        render(OUT / "render_print.png", [PRINT_ROT * part, PRINT_ROT * supports],
+               "adapter(blue) as printed, with its built-in supports(orange)")
         if NUTS:
             render(OUT / "render_fit_test.png", [fit_test], "fit test: fan cradle, blower cradle")
         render(OUT / "render_assembly.png",

@@ -23,6 +23,8 @@ There are two versions of the printed parts:
 
 Print the adapter upside down (top plate on the bed). The whole top face, carriage mount included, is flat at the same height. Print the ducts (2 copies of `2x_duct.stl`) flange-down (the flange's flat top face on the bed). Use ABS/ASA for both. The STL files are already turned to these orientations. The STEP files stay in the assembly frame.
 
+The adapter STL has its supports built in, so print it with slicer supports off. They're thin walls under the shelves, the duct lugs, the fan opening and (captive-nut version) the snap-fit cradle walls. Each one stops one 0.2 mm layer short of the face it holds up. Where one stands on the part instead of the bed, only short tabs touch it, so it snaps off cleanly. None of them go into a nut pocket or slot. The `SUP_*` constants in `cad/toolhead_adapter.py` set the wall thickness, spacing and gaps. The STEP has no supports, so you can use your slicer's own supports instead if you prefer. `render_print.png` shows the adapter as printed, with its supports.
+
 ## Files
 
 | Path | Contents |
@@ -31,7 +33,7 @@ Print the adapter upside down (top plate on the bed). The whole top face, carria
 | `ASSEMBLY_NUTS.md` | The same, for the captive-nut version |
 | `output/inserts/`, `output/nuts/` | One folder per version, each with the printed parts: `toolhead_adapter.stl` (carriage mount included) and `2x_duct.stl` (print 2). STEP files alongside |
 | `output/nuts/fit_test.stl` | Two small pieces for checking the fan and blower snap fits before printing the adapter |
-| `output/*/render_*.png` | Renders of the adapter, the duct, the full assembly, and the assembly on the carriage |
+| `output/*/render_*.png` | Renders of the adapter, the adapter as printed with its built-in supports, the duct, the full assembly, and the assembly on the carriage |
 | `cad/carriage_mount.py` | Parametric carriage mount, fused onto the adapter by `toolhead_adapter.py`. Run it to check the fit on the carriage |
 | `cad/toolhead_adapter.py` | Parametric build123d model; every dimension is a named constant at the top |
 | `third_party/` | Third-party models and reference material, not in git (see Rebuilding) |
