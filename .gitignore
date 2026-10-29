@@ -6,3 +6,6 @@ __pycache__/
 /third_party/
 # Contains the third-party models above
 /output/*/toolhead_assembly.step
+
+# Local editor settings
+/.vscode/settings.json
