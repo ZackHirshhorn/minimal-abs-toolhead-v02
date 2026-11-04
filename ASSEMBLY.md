@@ -11,7 +11,8 @@ Directions used below: **front** is the 3010 fan side, **back** is the BMG motor
 | Qty | Part | File | Material | Orientation |
 |---|---|---|---|---|
 | 1 | Adapter | `output/inserts/toolhead_adapter.stl` | ABS/ASA | Upside down, top plate on the bed. Supports are built in: turn slicer supports off |
-| 2 | Duct (both sides use the same part) | `output/inserts/2x_duct.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
+| 1 + 1 | Right duct and left duct (they differ, and each has its letter on the flange) | `output/inserts/duct_R.stl`, `output/inserts/duct_L.stl` | ABS/ASA, or something more heat-resistant | Flange down, flat top face of the flange on the bed |
+| 1 | Voron 0.2 X carriage | `X_Carriage_x1`, the one a Mini Stealthburner hangs on. Keep the one on your printer | ABS/ASA | As its source says |
 | 1 | Toolboard mount (optional, for an EBB36) | `output/inserts/toolboard_mount.stl` | ABS/ASA | Front face (the flat side without bosses) on the bed. No supports |
 
 The STL files are already turned to these orientations and sit on the bed. Import them as they are.
@@ -33,10 +34,9 @@ The STL files are already turned to these orientations and sit on the bed. Impor
 | Qty | Part | Where it goes |
 |---|---|---|
 | 6 | M3 heat-set insert, Ø5 × 4 mm long (for a Ø4.0 hole) | 2 top plate, 4 front plate |
-| 2 | M3 hex nut (5.5 mm across flats, 2.4 mm thick) | Carriage mount flange, for the hotend-mount screws |
-| 2 | M3×8 socket head screw | BMG to the top plate |
-| 2 | M3×35 socket head screw | Hotend mount module to the frame, into the nuts in the carriage mount flange. The tip ends about 1.2 mm past the nut, inside the flange |
-| 4 | M2×5 socket head screw | Adapter to the MGN7H carriage. 5 mm, no longer, or they hit the rail |
+| 2 | M3 hex nut (5.5 mm across flats, 2.4 mm thick) | X carriage, for the hotend-mount screws (if not already in it) |
+| 2 | M3×8 socket head screw | BMG to the top plate. The inserts sit at the top face, so the thick plate needs no longer screw |
+| 2 | M3×30 socket head screw | Toolhead and hotend mount module to the X carriage, into the nuts in its slots. The tip ends about 0.3 mm past the nut, 2.3 mm short of the end of the hole |
 | 2 | M3×35 and M3×30 socket head screw, 1 each (toolboard) | Replace the 2 motor screws, so their tips stick out of the motor's back for the standoffs |
 | 2 | M3×10 female-female standoff, 5 mm across flats (toolboard) | On the motor screw tips, behind the motor |
 | 2 | M3×8 socket head screw (toolboard) | Toolboard mount to the standoffs |
@@ -58,14 +58,14 @@ Soldering iron with a heat-set insert tip, 2.5 mm and 1.5 mm hex keys, Phillips 
 ### 1. Prepare the printed parts
 
 1. Remove the built-in supports: the combs under each shelf and duct lug, and the ribs in the fan opening. Break them off at their tabs with pliers. Then clean the tab marks off the faces they stood on.
-2. Test-fit the hotend mount module in the gap between the front plate and the back tab. It should slide in by hand without force (0.1 mm clearance per side). Sand or scrape the inner faces if it binds.
+2. Test-fit the hotend mount module in the frame, behind the front plate, between the arms and up against the underside of the top plate. It should slide in by hand without force (0.1 mm clearance to the front plate, 0.2 mm to each arm). Sand or scrape the inner faces if it binds.
 3. Clear the blower and duct pilot holes with a 2.2 mm drill if they came out undersized.
 
 ### 2. Install the heat-set inserts (6×)
 
 Press each insert in square to the face until it sits flush. Let it cool before moving on.
 
-1. **Top plate, 2×:** from the top face, in the two holes either side of the filament hole.
+1. **Top plate, 2×:** from the top face, in the two blind holes either side of the filament hole.
 2. **Front plate, 4×:** from the front face, at the corners of the Ø28 fan opening.
 
 ### 3. Attach the hotend to the mount module
@@ -74,19 +74,17 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 2. Fix the heatsink with its 4 screws.
 3. Rotate the hotend so the heater's 10 mm side (the one with the ears) runs left–right, toward the blowers. The ducts are sized for this. Turning it 90° also works and adds 0.9 mm of duct clearance.
 4. Fit the silicone sock.
-5. Route the heater and thermistor wires out to the side. The carriage mount's flange covers the back of the mount module.
+5. Route the heater and thermistor wires out to the side. The X carriage covers the back of the mount module.
 
 ### 4. Fit the mount module into the frame
 
-1. Drop an M3 nut into each of the two slots in the top face of the carriage mount, just behind the back tab. They fall to the bottom of the slot, in line with the screw holes.
-2. With the ducts still off, slide the mount module up into the frame from below, between the front plate and the back tab, plate side up, until it stops against the underside of the top plate.
-3. Push 2× M3×35 screws in from the front, through the counterbored holes, the mount's horizontal holes and the back tab, into the nuts.
-4. Tighten them evenly. Stop once they're snug, or the screws will bow the back tab.
+1. With the ducts still off, slide the mount module up into the frame from below, behind the front plate, plate side up, until it stops against the underside of the top plate.
+2. Push 2× M3×30 screws in from the front, through the counterbored holes and the mount's horizontal holes. They hold the mount module in the frame until the toolhead goes on the X carriage (see [X carriage](#x-carriage-voron-02)), where they end in its nuts. Their tips stick out about 5.7 mm behind the mount's back face.
 
 ### 5. Fit the PTFE tube
 
 1. Push the PTFE tube down through the filament hole in the top plate until it bottoms out in the heatsink.
-2. Cut it so it reaches up into the BMG's tube seat when the BMG sits flat on the top plate. Use the Wristwatch BMG's own guide for how far the tube should reach.
+2. Cut it about 6 mm above the top plate's top face, so it reaches up into the BMG's 6.2 mm deep tube seat when the BMG sits flat on the plate. That puts its end about 31 mm above the heatsink's top face, plus however far it goes down into your heatsink. Don't reuse a tube cut for a thinner plate: this one is 6 mm longer than on a 6 mm plate.
 3. Cut the end square and chamfer the inside edge lightly.
 
 ### 6. Mount the heatsink fan
@@ -100,26 +98,26 @@ Press each insert in square to the face until it sits flush. Let it cool before 
 2. Its two diagonal ears line up with the two pilot holes in the arm.
 3. Drive 2× M2.5 self-tapping screws through the ears into the arm. Stop when the blower is snug, because the threads are cut in plastic.
 4. Repeat on the other side.
+5. The right blower's wire leaves its back edge right next to the lower belt, with only about 0.55 mm between the blower and the belt. Bend it **down** straight away, along the back of the blower to the shelf, so it can't rub on the belt. The left blower's wire leaves at the front and has room.
 
 ### 8. Fit the ducts (both sides)
 
-1. Hold a duct with its flange against the underside of the shelf so the outlet points in toward the nozzle.
-2. Fix it with 2× M2.5×8 self-tapping screws up into the shelf.
-3. Repeat on the other side with the second duct. It's the same part, turned 180°.
+1. The two ducts differ. **R** goes on the right (the +X side, on your right when you face the fan) and **L** on the left. The letter is on the flange's underside, and a duct's screw holes only line up on its own side.
+2. Hold a duct with its flange against the underside of the shelf so the outlet points in toward the nozzle.
+3. Fix it with 2× M2.5×8 self-tapping screws up into the shelf.
+4. Repeat on the other side with the other duct.
 4. Check that neither duct touches the heater block or the sock. There should be about 5 mm of air gap to the bare block, and the lowest point of each duct should sit about 4.5 mm above the nozzle tip.
 
 ### 9. Mount the BMG
 
-If the toolhead goes on a Voron 0.2, bolt it to the carriage first (see [MGN7H carriage](#mgn7h-carriage-voron-02)). The motor covers those screws.
-
-1. Set the BMG on the top plate with its motor toward the back, over the carriage mount.
+1. Set the BMG on the top plate with its motor toward the back. On the printer, the motor sits over the X carriage.
 2. Make sure the PTFE tube enters its tube seat.
 3. Fix it with 2× M3×8 screws down through the BMG flange into the top plate inserts.
 
 ### 10. Wire up and check
 
 1. Connect the hotend fan, the blowers, the heater and the thermistor. Use the same pins and fan config as on your Mini Stealthburner, and check that the fan voltage matches your board.
-2. Tie the wires so none can reach the heater block or sit in front of the blower inlets.
+2. Tie the wires so none can reach the heater block, sit in front of the blower inlets or touch the belts.
 3. Heat to printing temperature and check the following:
    - The heatsink fan blows into the heatsink.
    - Both blowers blow out of the duct tips.
@@ -127,18 +125,27 @@ If the toolhead goes on a Voron 0.2, bolt it to the carriage first (see [MGN7H c
    - Filament feeds through smoothly.
 4. Re-tighten the nozzle hot as usual for the TZ-V6.
 
-## MGN7H carriage (Voron 0.2)
+## X carriage (Voron 0.2)
 
-The carriage mount is part of the adapter. Its plate sits on top of the MGN7H carriage, under the BMG motor, and its flange is fused to the back tab. The two hotend-mount screws end in nuts in that flange.
+The toolhead hangs on the Voron 0.2 X carriage the way the Mini Stealthburner does. The X carriage stays on the MGN7H carriage with the belts clamped in it, so nothing on the printer changes. The two hotend-mount screws end in M3 nuts in slots in it.
 
-1. Before mounting the BMG, bolt the adapter to the carriage with 4× M2×5 socket head screws, down through the counterbored holes in the plate. Use 5 mm, no longer, or the screws hit the rail.
-2. Then mount the BMG. Its motor sits over the M2 screws and the nut slots.
+1. Drop an M3 nut into each of the two slots in the X carriage's top, just behind its front face, if they aren't in already. They fall to the bottom of the slot, in line with the two holes in its front face.
+2. Hold the toolhead against the X carriage's front face, with the tips of the two M3×30 screws in its holes. The BMG goes over the top of the X carriage, and the top plate's notch fits around it.
+3. Tighten the screws evenly from the front (the hex key reaches their heads above the fan) until the mount module's back face sits flat on the X carriage. Stop once they're snug.
 
-To take the toolhead off the carriage, take the BMG off first (2 screws), then remove the 4 M2 screws.
+To take the toolhead off, undo the same 2 screws. The BMG and the belts can stay where they are.
+
+The BMG's bottom face clears the boss on the X carriage's top by 0.7 mm, and the motor clears the X carriage by about 6 mm. The belts pass 0.55 mm behind the adapter's sides and the blowers.
+
+The nozzle sits 10.85 mm in front of the X carriage's front face (27.35 mm in front of the rail's centre line) and 55 mm below the hotend-mount screws. The Y position and the mount's seat are the Mini Stealthburner's: `MiniSB_Bowden.step` has the same X carriage face, screw holes and mount seat, and the filament on the X carriage's centre. That file has no hotend in it, so the height assumes this mount module and the 45.6 mm TZ-V6 2.0 from the drawing. If your Mini Stealthburner used the same mount and hotend, your X and Y `position_endstop` and `position_max` need no change for the nozzle position. Re-do your Z offset as after any hotend work.
+
+The nozzle staying put doesn't mean the rest of the toolhead takes the same room, so move it slowly to the ends of its travel the first time. The BMG's top is about 54 mm above the mount top (the Mini Stealthburner's cowling: about 16 mm), the front reaches 25.4 mm in front of the nozzle (cowling: 22.7 mm), and with the EBB36 fitted the board's back is 19.8 mm behind the X carriage.
+
+The Ø22 heatsink reaches 0.15 mm past the mount module's back face, so in the model it touches the X carriage's front face in a strip about 3.5 mm wide. The same goes for a Mini Stealthburner with this mount and hotend, and nothing in the adapter can change it without moving the nozzle. If the mount module won't sit flat on the X carriage, scrape a shallow flat into that strip of the X carriage's face.
 
 ## EBB36 toolboard (optional)
 
-The mount holds a BTT EBB36 CAN on the back of the BMG motor, on two M3 female-female standoffs threaded onto the motor screws. The motor screws sit on a diagonal, so the mount turns the board level and centres it on the motor. That keeps its bottom edge about 4 mm above the adapter's top face and clear of the carriage mount under the motor.
+The mount holds a BTT EBB36 CAN on the back of the BMG motor, on two M3 female-female standoffs threaded onto the motor screws. The motor screws sit on a diagonal, so the mount turns the board level and centres it on the motor. That keeps its bottom edge about 4 mm above the adapter's top face and clear of the X carriage under the motor.
 
 1. Take out the BMG's 2 motor screws, one at a time so the motor stays put. Put in longer ones the same way, heads in the BMG: M3×35 in the upper hole, M3×30 in the lower one. Their tips should stick out about 4.3 mm past the motor's back face. If yours stick out more than 5 mm, use a shorter screw, or the mount screw won't have room in the standoff.
 2. Thread an M3×10 female-female standoff onto each tip until it seats on the motor.

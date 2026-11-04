@@ -16,6 +16,8 @@ VIEWS = {"iso": (25, -60), "front (-Y)": (0, -90), "right (+X)": (0, 0), "top (+
 
 
 def tris(shape, tol=0.1):
+    if hasattr(shape, "triangles"):  # already a mesh (trimesh)
+        return shape.triangles
     out = []
     for f in shape.faces():  # per face, so one bad face in a vendor STEP doesn't kill the render
         try:

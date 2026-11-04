@@ -9,7 +9,7 @@ Every part is a separate object in the viewer tree, so each can be hidden or iso
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
-from build123d import Rot
+from build123d import import_stl
 from ocp_vscode import show
 import toolhead_adapter as ta
 import carriage_mount as cm
@@ -20,14 +20,14 @@ PARTS = {  # name: colour, matching the render captions
     "hotend_mount": "orange", "fan_3010": "red", "blower_R": "green", "blower_L": "green",
     "bmg": "mediumpurple", "hotend": "saddlebrown",
     "toolboard_mount": "steelblue", "motor": "dimgray", "standoffs": "gold", "ebb36": "darkgreen",
-    "mgn7h_carriage": "lightseagreen", "mgn7_rail": "silver", "x_extrusion": "dimgray",
+    "x_carriage": "sienna", "belts": "black", "mgn7h_carriage": "lightseagreen", "mgn7_rail": "silver", "x_extrusion": "dimgray",
 }
 
 
 def main():
-    duct = ta.build_duct()
-    objs = {"adapter": ta.build_part(), "duct_R": duct, "duct_L": Rot(0, 0, 180) * duct, "toolboard_mount": tm.build_mount()}
+    objs = {"adapter": ta.build_part(), "duct_R": ta.build_duct(1), "duct_L": ta.build_duct(-1), "toolboard_mount": tm.build_mount()}
     objs.update(ta.load_vendor())
+    objs["x_carriage"] = cm.LOC_XC * import_stl(cm.XC_FILE)
     objs.update(cm.build_reference())
     objs.update(tm.build_reference())
     names = list(objs)

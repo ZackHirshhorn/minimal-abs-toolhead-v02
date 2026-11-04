@@ -9,8 +9,8 @@ Outputs go to ../output/inserts/ or ../output/nuts/ (with --nuts).
 Layout: the 2 screws that hold the LDO-36STH20 motor to the BMG are swapped for longer ones (M3x30 and M3x35,
 heads in the BMG as before) whose tips stick out of the motor's back face. An M3 female-female standoff threads
 onto each tip, and the mount's plate screws onto the standoffs' other ends. The motor screws sit on a diagonal
-(about 28 deg off level), so a board bolted straight onto them would be tilted and its lower corner would hit
-the carriage mount's plate under the motor. The plate turns it level instead: the board's 2 holes (43.85 apart,
+(about 28 deg off level), so a board bolted straight onto them would be tilted and its lower corner would hang
+below the adapter's top face, behind the X carriage. The plate turns it level instead: the board's 2 holes (43.85 apart,
 on its long axis) sit on bosses on a horizontal line, centred on the motor axis.
 Print it front face (the motor side) down. No supports needed.
 """
@@ -147,6 +147,9 @@ def main(render_png=True):
         for n, o in others.items():
             print(f"  {k} x {n}: {interference(v, o)}")
     print(f"  toolboard_mount x motor: {interference(mount, ref['motor'])}")
+    xc = cm.load_x_carriage()
+    for k, v in [("toolboard_mount", mount)] + list(ref.items()):
+        print(f"  {k} x x_carriage: {cm.mesh_interference(xc, v)}")
     print(f"gap mount to adapter: {mount.distance_to(adapter):.2f}, board to adapter: {ref['ebb36'].distance_to(adapter):.2f}, "
           f"board to BMG: {ref['ebb36'].distance_to(vendor['bmg']):.2f} mm")
 
@@ -155,8 +158,8 @@ def main(render_png=True):
         render(OUT / "render_toolboard_mount.png", [mount], "toolboard mount (EBB36 CAN)")
         render(OUT / "render_assembly_toolboard.png",
                [adapter, mount, Compound([ref["motor"], ref["standoffs"]]), vendor["bmg"], ref["ebb36"],
-                Compound([car["mgn7h_carriage"], car["mgn7_rail"]])],
-               "adapter(blue) toolboard mount(orange) motor+standoffs(red) BMG(green) EBB36(purple) MGN7H(teal)")
+                Compound([car["mgn7h_carriage"], car["mgn7_rail"]]), xc],
+               "adapter(blue) toolboard mount(orange) motor+standoffs(red) BMG(green) EBB36(purple) MGN7H(teal) X carriage(brown)")
     return mount
 
 
